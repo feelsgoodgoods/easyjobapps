@@ -37,3 +37,18 @@ With the app, you can:
 
 `apt-get install texlive`
 `sudo apt-get install texlive-latex-extra` - `Y`
+
+
+
+#documentscontainer
+
+- #uploadeddocuments
+- - You have no cover letters or resumes
+- - button #newdocument
+
+- #documenteditor
+- - form
+- - - select name="type" [ value="resume", value="coverletter"]
+- - - name="title"
+- - - name="file" accept=".pdf,.txt,.md,.doc,.docx"
+- - - name="text"  

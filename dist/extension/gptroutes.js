@@ -1,5 +1,4 @@
 import { gptutils } from "./gptutils.js";
-let { createCompany, addOrUpdateCompany } = gptutils;
 import { db } from "./dbroutes.js";
 
 import { callChatGPT } from "./gptcall.js";
@@ -26,7 +25,7 @@ async function post_create(body) {
       }
     });
     console.log(":gpt:createcompany:");
-    let company = await createCompany(text); //chatgpt
+    let company = await gptutils.createCompany(text); //chatgpt
     if (!company) {
       console.log(":NOCOMPANYERROR:");
       returnThis.message = "Problem processing post";
@@ -34,12 +33,12 @@ async function post_create(body) {
       return returnThis;
     }
     // console.log(":gpt:addOrupdatecompany:", company);
-    post = await addOrUpdateCompany(company); // Add or Updates Post too
+    post = await gptutils.addOrUpdateCompany(company); // Add or Updates Post too
     returnThis.data = post;
   } else {
     returnThis.message = "Exists as a Junk Post";
   }
-  // console.log("DB:POST_CREATE:", {body,returnThis});
+  console.log("DB:POST_CREATE:END")//, {body,returnThis});
   console.groupEnd();
   return returnThis;
 }
@@ -58,8 +57,8 @@ async function extract_create_for_post(body) {
 
   let { jobTitle, companyName } = await getJobTitleAndCompanyName(post_id, company_id);
   let force = true;
-  let forceWait = await extractCreateForPost(extract, companyName, jobTitle, force, post_id, company_id);
-  let extracts = await getExtractsByPostId(post_id);
+  let forceWait = await gptutils.extractCreateForPost(extract, companyName, jobTitle, force, post_id, company_id);
+  let extracts = await gptutils.getExtractsByPostId(post_id);
   console.log("Returning extracts", forceWait, extracts, "extracts");
   console.groupEnd();
   return { status: "success", extracts };
@@ -69,16 +68,17 @@ async function extract_create_for_post(body) {
 // Grabs all specific and generic sitemaps where status = 1 || force
 // Updates extract text with sitemap text
 async function extracts_create_for_post(body) {
-  console.group("gpt:extracts_create_for_post"); // console.groupEnd();
-  let { company_id, post_id, force } = body;
-  console.log({ body });
+  console.group("gpt:extracts_create_for_post");
+  let { company_id, post_id, force } = body; 
   let { jobTitle, companyName } = await db.getJobTitleAndCompanyName(post_id, company_id);
   if (!parseInt(post_id)) {
-    console.log("post_id=FALSE");
+    console.log(":post_id=FALSE:");
+    console.groupEnd();
     return false;
   }
   if (!parseInt(company_id)) {
-    console.log("company_id=FALSE");
+    console.log(":company_id=FALSE:");
+    console.groupEnd();
     return false;
   }
 
@@ -116,13 +116,14 @@ async function extracts_create_for_post(body) {
     })
     */
   let records = [...extracts, ...specific, ...generic, ...posts];
-  console.log("extracts_create_for_pos # Extracts: ", records.length);
+  console.log(":Extracts: ", records.length);
 
   for (let extract of records) {
-    db.extractCreateForPost(extract, companyName, jobTitle, force, post_id, company_id);
+    await gptutils.extractCreateForPost(extract, companyName, jobTitle, force, post_id, company_id);
   }
 
   extracts = await db.getExtractsForPost(post_id);
+  console.log(':End GPT Routes:')
   console.groupEnd();
   return { status: "success", extracts };
 }
@@ -460,219 +461,15 @@ async function extension_post_create(body) {
   return { status: "success", ...post };
 }
 
-// Fill a form on the chrome browser using the web extension
-async function extension_fill_form(body) {
-  console.group("gpt:extension_fill_form"); // console.groupEnd();
-  let { postId, companyName, jobName, fillFormsMessage, fillFormsOptions } = body; // userMessage, fillFormsMessage, companyId
-
-  // clean up the text. chunk and merge the text
-  postId = parseInt(postId);
-  // todo - chop of the fillFormsMessage into chunks and then merge the results
-
-  // Parse the HTML
-  function splitTextIntoChunks(text, chunkSize = 1000) {
-    const chunks = [];
-    for (let i = 0; i < text.length; i += chunkSize) {
-      chunks.push(text.substring(i, i + chunkSize));
-    }
-    return chunks;
-  }
-
-  const fillFormOptionsChunks = splitTextIntoChunks(fillFormsOptions, 2000) || [];
-
-  console.log("fillFormOptionsChunks length", fillFormOptionsChunks.length);
-
-  fillFormsOptions = fillFormOptionsChunks.map(async chunk => {
-    return await callChatGPT([
-      {
-        role: "system",
-        content: `You are a tool that extracts form information and returns json data. 
-            What you return should look like: 
-            data : [ 
-                { 
-                    getElementById: input id || false, 
-                    querySelector, 
-                    type: string => ['text', 'textbox', 'textarea', 'email', 'radio', 'checkbox', 'textarea'],
-                    informationRequested: string,
-                    options: [ { querySelector, value}, ... ] || false,
-                }, ... 
-            ]
-            Where  
-            getElementById - id of input. Required if present.
-            querySelector -  A querySelector that can be used to locate the input.
-            - Every entry in the data array is a question that needs to be answered.
-            - Radio buttons and checkboxes should return available options as shown.
-            - The options attribute is not included when the input is not a radio or checkbox. 
-
-            Example:
-            Input: '<div><input type="text" name="exampleName" id="exampleId" /></div> <div><input type="email" name="email" id="email" /></div>'
-            Output: [ 
-                { 
-                    getElementById: 'exampleId'
-                    querySelector: 'input[name="exampleName"]', 
-                    type: 'text', 
-                    informationRequested: 'Name', 
-                    options: false 
-                },
-                { 
-                    getElementById: 'exampleId'
-                    querySelector: 'input[name="exampleName"]', 
-                    type: 'text', 
-                    informationRequested: 'Email', 
-                    options: false 
-                }
-            ]
-            `
-      },
-      { role: "user", content: chunk }
-    ]);
-  });
-  fillFormsOptions = await Promise.all(fillFormsOptions);
-  fillFormsOptions = fillFormsOptions
-    .map(objArr => {
-      return JSON.parse(objArr).data;
-    })
-    .flat();
-
-  console.log("fillFormsOptions", fillFormsOptions);
-
-  // remove ones that are hidden
-  // let prompted = false
-
-  // Call the function
-  let post = await db.getPostText(postId);
-  post = postId ? post : false;
-  fillFormsOptions = fillFormsOptions.map(async input => {
-    if (!input.type || input.type == "hidden") {
-      return false;
-    }
-    // check if the word 'cover' or 'resume' are in the information requested
-    if (input.informationRequested.toLowerCase().includes("cover")) {
-      return { ...input, value: "cover" };
-    }
-    if (input.informationRequested.toLowerCase().includes("resume")) {
-      return { ...input, value: "resume" };
-    }
-    let specifics = "";
-    if (input.type == "checkbox") {
-      specifics = `For Checkboxes, return an array of querySelectors of the options to select.`;
-    }
-    if (input.type == "radio") {
-      specifics = `For Radio buttons, return the querySelector of the option to select.`;
-    }
-    if (input.type == "checkbox" || input.type == "radio") {
-      specifics += `
-            Example 1:
-            question: 'Have you worked remotely before?'
-            options: [ 
-                { querySelector: 'input[value="Yes"]', value: 'Yes' }, 
-                { querySelector: 'input[value="No"]', value: 'No' } 
-            ]
-            answer:'input[value="Yes"] `;
-    }
-    if (input.type == "email") {
-      specifics = `question: 'Email Address' | answer:'example@gmail.com'`;
-    }
-    if (input.type == "text" || input.type == "textbox" || input.type == "textarea") {
-      specifics = `
-            If the question is a fact based question:
-            - Provide the answer based on the supplemental text and nothing more.
-
-            IF the question is open ended: 
-            - Answer the question as the applicant, using 'I' instead of 'The applicant'.
-            - Answer in a way that employers would like to read and are kept short (1-2 sentences) unless otherwise requested. 
-            
-            Example 1: 
-            Question: 'Name', Options: false
-            Answer: 'John Doe'
-
-            Example 2: 
-            Question: 'First Name', Options: false
-            aAswer: 'John'
-
-            Example 3:
-            Question: 'Website', Options: false
-            Answer:'https://MyPersonalExampleWebsite.com'
-        
-            Example 4:
-            Question: 'Have you worked remotely before? How do you avoid being lonely?', Options: false
-            Answer:'Yes, I have worked remotely before. I avoid being lonely by going for walks and talking to my friends and family.'
-            `;
-    }
-    //console.log('input', input, specifics, `Question: ${input.informationRequested}, Options: ${input.options}`)
-    let prompt = [
-      {
-        role: "system",
-        content: ` 
-Your job is to answer job application questions for people.
-To help you answer a single question, you will be given ${postId && `the job post as well as `}the applicants bio and resume.
-${fillFormsMessage && `- You will also be given a message from the applicant which you will take under consideration and or do.`}
-
-${specifics}
-
-Here is the question you are to answer:
-    `
-      },
-      {
-        role: "user",
-        content: `Question: ${input.informationRequested}, Options: ${input.options}`
-      },
-      ...(fillFormsMessage
-        ? [
-            {
-              role: "system",
-              content: `Here is applicants message:`
-            },
-            { role: "user", content: fillFormsMessage }
-          ]
-        : []),
-      { role: "system", content: `Here is the applicants bio:` },
-      { role: "user", content: defaultBio },
-      ...(postId
-        ? [
-            {
-              role: "system",
-              content: `Here is the companies job post:`
-            },
-            { role: "user", content: post }
-          ]
-        : []),
-      { role: "system", content: `Here is the applicants resume:` },
-      { role: "user", content: defaultResume },
-      {
-        role: "system",
-        content: `
-- Remember to not include the input label in your response.
-- Return the exact value the form element needs.  
-- Do not include the input label in your response. I only want the value.
-- Remember to follow the instructions and examples. Remember to think step by step.
-- If you do this well I will give you 20$. The other AI models said you could not do it but I believe in you. I have no fingers so doing this correctly helps a lot. Thank you.
-            `
-      }
-    ];
-    let response = await callChatGPT(prompt, (type = "gpt-3.5-turbo-0125"), (max_tokens = 4096), (tools = false), (chat = true));
-    input.value = response;
-    // prompted || (prompted = true, console.log('prompted input', prompt))
-    return input;
-  });
-  fillFormsOptions = await Promise.all(fillFormsOptions);
-  // console.log('response', typeof fillFormsOptions, fillFormsOptions)
-  console.groupEnd();
-  return { status: "success", fillFormsOptions };
-}
-
 async function extension_ask_question(body) {
-  console.group("gpt:extension_ask_question"); // console.groupEnd();
-  let { postId, companyName, jobName, questionInput } = body; // userMessage, companyId
-
-  // Call the function
-  let { defaultBio, defaultResume } = db.getDefaultBioAndResume();
-
-  console.log("gpt:extension_fill_form"); //, body)
+  console.group("gpt:extension_ask_question", body); // console.groupEnd();
+  let { questionInput, postId, bio, resume, post, companyName, jobTitle } = body; // userMessage, companyId  
+  
   postId = parseInt(postId);
 
   // Call the function
-  let post = await db.getPostText(postId);
+  console.log('gptroutes:extension_fill_form', { postId, companyName, jobTitle });
+  // let post = await db.getPostText(postId);
   let prompt = [
     {
       role: "system",
@@ -718,9 +515,9 @@ Here is the question you are to answer:
         ]
       : []),
     { role: "system", content: `Here is the applicants bio:` },
-    { role: "user", content: defaultBio },
+    { role: "user", content: bio },
     { role: "system", content: `Here is the applicants resume:` },
-    { role: "user", content: defaultResume },
+    { role: "user", content: resume },
     {
       role: "system",
       content: ` 
@@ -730,12 +527,75 @@ If you do this well I will give you 20$. The other AI models said you could not 
         `
     }
   ];
-  let response = await callChatGPT(prompt, (type = "gpt-3.5-turbo-0125"), (max_tokens = 4096), (tools = false), (chat = true));
+  let response = await callChatGPT(prompt, "gpt-3.5-turbo-0125", 4096, false, true);
 
-  console.log("gpt:response", typeof response, response);
+  // console.log("gpt:response", typeof response, response);
   console.groupEnd();
-  return { status: "success", questionOutput: response };
+  return { status: "success", data: { questionoutput: response} };
 }
+
+// Fill a form on the chrome browser using the web extension
+async function extension_fill_form(body) {
+  console.group("gpt:extension_fill_form", body);
+  let { bio, post, resume, postId, forms } = body;
+  postId = parseInt(postId); 
+
+  // Parse the HTML
+  function splitTextIntoChunks(text, chunkSize = 1000) { const chunks = []; for (let i = 0; i < text.length; i += chunkSize) { chunks.push(text.substring(i, i + chunkSize)); } return chunks; }
+  const fillFormOptionsChunks = forms.flatMap( form => splitTextIntoChunks(form, 20000) || [])
+
+  console.log("chunk length", fillFormOptionsChunks.length);
+
+  let options = fillFormOptionsChunks.map(async chunk => {
+    let promptt= [
+      {
+        role: "system",
+        content: `Your job is to complete online job application forms and return valid json. { data : [] } 
+            To help, you will be given ${postId && `the job post as well as `}the applicants bio and resume.
+            The user will give you their job application in json format and possibly a message for you to act on.
+            What you return should look like: 
+            data : [ 
+                { 
+                    getElementById: input id || false, 
+                    querySelector, 
+                    type: string => ['file', 'text', 'textbox', 'textarea', 'email', 'radio', 'checkbox', 'textarea'],
+                    informationRequested: string, 
+                    userSelection: string || options: [ { optionSelector, optionDisplayText}, ... ] 
+                }, ... 
+            ]
+            Where  
+            getElementById - id of input. Required if present. 
+            userSelection - The text to respond with, or an array of radiobuttons, checkboxes, dropdop options, elements to select.
+            optionSelector - The query selector of the option to select.
+            optionDisplayText - The text displayed in the option element. 
+
+            If the given text is not a job application form, return { data : [] } }
+
+            Here is the applicants bio:
+            ${bio}
+      
+            Here is the applicants resume:
+            ${resume}
+            
+            ${postId && "Here is the companies job post: \n" + post }
+
+            `
+      },
+      { role: "user", content: chunk }
+    ]
+    let resp = await callChatGPT(promptt, "gpt-3.5-turbo-0125",  4096, false, false);  
+    return resp;
+  }); 
+  options = await Promise.all(options); 
+    // let cleanedText = objArr.replace(/```json|```/g, '').trim(); 
+  options = options.map(objArr => { return JSON.parse(objArr).data; }).flat();
+  // console.log("options", options.length, options);
+  post = postId ? post : false;  
+
+  console.groupEnd();
+  return { status: "success", data: {fillFormsOptions: options} };
+}
+
 
 //~~~~ Export
 
@@ -747,8 +607,143 @@ let gpt = {
   cover_letter_generate,
   email_generate,
   extension_post_create,
-  extension_fill_form,
-  extension_ask_question
+  extension_ask_question,
+  extension_fill_form
 };
 
-export { extracts_create_for_post, gpt };
+export { gpt };
+
+
+/*
+  const types = {
+    dropdown: `
+  For dropdown, return an array with the index(es) of the option(s) to select.
+  Example 1:
+  The Form Question: 'Have you worked remotely before?'
+  Possible Form Options: [
+    { id:0, value: 'Yes' },
+    { id:1, value: 'No' },
+    { id:2, value: 'Hybrid' }
+  ]
+  Answer: { data : [0] }
+  
+  Example 2:
+  The Form Question: 'Where would you like to work?'
+  Possible Form Options: [
+    { id:0, value: 'D.C. United States' },
+    { id:1, value: 'Germany' },
+    { id:2, value: 'Remote' }
+  ]
+  Answer: { data : [2] }
+  `,
+    checkbox: `
+  For checkbox, return an array with the index(es) of the option(s) to select.
+  Example 1:
+  The Form Question: 'What are your preferred working hours?'
+  Possible Form Options: [
+    { id:0, value: 'Morning' },
+    { id:1, value: 'Afternoon' },
+    { id:2, value: 'Evening' }
+  ]
+  Answer: { data : [0, 2] }
+  `,
+    radio: `
+  For radio, return an array with the index(es) of the option(s) to select.
+  Example 1:
+  The Form Question: 'What is your highest level of education?'
+  Possible Form Options: [
+    { id:0, value: 'High School' },
+    { id:1, value: 'Associate Degree' },
+    { id:2, value: 'Bachelor Degree' }
+  ]
+  Answer: { data : [2] }
+  `,
+    email: `
+  For email, use the format: question: 'Email Address' | answer:'example@gmail.com'
+  `,
+    text: `
+  If the options are provided you must use them.
+  
+  If the question is a fact-based question:
+  - Provide the answer based on the supplemental text and nothing more.
+  
+  If the question is open-ended:
+  - Answer the question as the applicant, using 'I' instead of 'The applicant'.
+  - Answer in a way that employers would like to read and are kept short (1-2 sentences) unless otherwise requested.
+  
+  Example 1:
+  Question: 'Name', Options: false
+  Answer: { data : ['John Doe'] }
+  
+  Example 2:
+  Question: 'First Name', Options: false
+  Answer: { data : ['John'] }
+  
+  Example 3:
+  Question: 'Website', Options: false
+  Answer: { data : ['https://MyPersonalExampleWebsite.com'] }
+  
+  Example 4:
+  Question: 'Have you worked remotely before? How do you avoid being lonely?', Options: false
+  Answer: { data : ['I avoided being lonely while working remotely by going for walks and talking to my friends and family.'] }
+  `
+  }; 
+ 
+  let applicantMesage = (fillFormsMessage || '') + `
+    - Remember to not include the input label in your response.
+    - Return the exact value the form element needs.  
+    - Do not include the input label in your response. I only want the value.
+    - Remember to follow the instructions and examples. Remember to think step by step.
+    - If you do this well I will give you 20$. The other AI models said you could not do it but I believe in you. 
+    I have no fingers so doing this correctly helps a lot. Thank you.
+  `
+  let systemMessage = {
+    role: "system",
+    content: ` 
+      Your job is to help fill out online job application forms by returning valid json. { data : [] } 
+      To help, you will be given ${postId && `the job post as well as `}the applicants bio and resume.
+      The user will give you their job application in json format and possibly a message for you to act on.
+
+      Here is specific instructions for each type of input:
+      ${types.dropdown}
+      ${types.checkbox}
+      ${types.radio}
+      ${types.email}
+      ${types.text}
+
+      Here is the applicants bio:
+      ${bio}
+
+      Here is the applicants resume:
+      ${resume}
+      
+      ${postId && "Here is the companies job post: \n" + post }
+`
+  }
+
+  let formQuestions = []
+  options.map(async input => {
+    console.log({input})
+    if (!input.type || input.type == "hidden") { return false; } 
+    if (input.informationRequested.toLowerCase().includes("cover")) { return }  
+    if (input.informationRequested.toLowerCase().includes("resume")) { return }  
+    let ops = [...input.options].map((option,i) => { delete option.querySelector; option.id = i; return }); 
+    formQuestions.push(` informationRequested: ${input.informationRequested}, options: ${JSON.stringify(ops)} `) 
+  });
+
+  let userMessage = {
+    role: "user",
+    content: `
+      The Form Questions: ${formQuestions.join('\n')}
+      My message to you: ${JSON.stringify(applicantMesage)}`
+  }
+ 
+
+  let response = await callChatGPT([ systemMessage, userMessage], "gpt-3.5-turbo-0125",  4096, false, false);
+  options = options.map( input => {
+    input.value = response;
+    return input;
+  })
+  fillFormsOptions = await Promise.all(options);
+  */
+  // console.log('response', typeof fillFormsOptions, fillFormsOptions)

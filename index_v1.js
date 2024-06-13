@@ -48,7 +48,6 @@ files.forEach(file => app.get(`/${file}`, (req, res) => res.sendFile(path.join(_
 
 const record_company = require("./extension/gpt");
 const db = require("./utils/db");
-
 const routes = require("./extension/routes");
 
 // Simple method to routes

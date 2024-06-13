@@ -38,6 +38,16 @@ class SQLDatabase {
     this.tables = {};
   }
 
+  fetchTable(tableName) {
+    let table = this.tables[tableName]; 
+    if (!table) { 
+      table = localStorage.getItem(tableName)
+      table = JSON.parse(table);
+      this.tables[tableName] = table;
+    }
+    return table
+  }
+
   // Create Table
   create(args, query) {
     const ifNotExists = query.includes("IF NOT EXISTS");
@@ -73,16 +83,7 @@ class SQLDatabase {
     const schemaString = query.substring(schemaStartIndex, schemaEndIndex).trim();
     // console.log("parseSchema1", { query, schemaString });
     if (ifNotExists) {
-      let flag = false;
-      if (this.tables[tableName]) {
-        flag = true;
-      } else {
-        const table = localStorage.getItem(tableName);
-        if (table) {
-          flag = true;
-          this.tables[tableName] = JSON.parse(table);
-        }
-      }
+      let flag = this.tables[tableName] || this.fetchTable(tableName)
       if (flag) {
         // console.log("Table:", tableName, this.tables[tableName]);
         return `Table ${tableName} exists.`;
@@ -157,7 +158,7 @@ class SQLDatabase {
 
   // Insert NEW record
   insert(tableName, fieldNames, values) {
-    const table = this.tables[tableName];
+    const table = this.fetchTable(tableName)
     if (!table) throw new Error(`Table ${tableName} does not exist.`);
     const newData = {};
     let strswaps = [];
@@ -200,7 +201,7 @@ class SQLDatabase {
       let [col, val] = swap;
       returnData[col] = val;
     });
-    console.log("* TABLE:INSERT:", newData); //, { tableName, table, fieldNames, values, newData });
+    console.log("* TABLE:INSERT:");//, newData); //, { tableName, table, fieldNames, values, newData });
     localStorage.setItem(tableName, JSON.stringify(table));
     return returnData;
   }
@@ -214,17 +215,22 @@ class SQLDatabase {
 
   // Select statement
   select(tableName, condition, params) {
-    const table = this.tables[tableName];
-    // console.log("TABLE:SELECT:    > :", { tableName, condition, params }); // condition
-    if (!table) throw new Error(`Table ${select} does not exist.`);
     let returnThis = [];
+    const table = this.fetchTable(tableName)
+    // console.log("TABLE:SELECT:    > :", { tableName, condition, params }); // condition
+    if (!table){  
+      console.log(`Table ${tableName} does not exist.`)
+      return returnThis
+      //throw new Error(`Table ${tableName} does not exist.`);
+    } 
     if (condition.includes("ORDER BY")) {
       const [cond, orderClause] = condition.split("ORDER BY");
       returnThis = this.applyCondition(table, cond.trim(), [...params]);
       returnThis = this.orderBy(returnThis, orderClause.trim());
-    } else {
+    } else { 
       returnThis = this.applyCondition(table, condition, [...params]);
     }
+    // console.log("TABLE:SELECT:    > :", { table, condition, params, returnThis });
     // console.log(`TABLE:SELECT:${tableName}:got < `, returnThis);
     // map through the schema, for each text recrod decode the value and return
     let schema = table.schema;
@@ -250,73 +256,38 @@ class SQLDatabase {
   applyCondition(table, condition, params) {
     let records = table.records;
     let schema = table.schema;
-    // console.log({ records });
+    // console.log("TABLE:APPLYCONDITION:", { condition, params, records });
 
-    // Access parameter values on-the-fly during evaluation
+    // Evaluates a condition against a record using provided comparison operators
+    const evaluate = (record, cond, params) => {
+        const ops = {
+            "=": (a, b) => {
+              //â
+              // console.log("EQUALS:", a, b, a == b)
+              // len 
+              // console.log("EQUALS:", a.length, b.length)
+              return a == b
+            },
+            "LIKE": (a, b) => {
+                b = b.replace(/%/g, ".*"); // Convert SQL LIKE pattern to RegExp pattern
+                return new RegExp(b, "i").test(a); // Case insensitive comparison
+            }
+        };
 
-    const evaluate = (record, cond) => {
-      const compareFns = {
-        "=": (a, b) => {
-          // console.log("Comparing:", a, b, String(a) == String(b));
-          return String(a) == String(b);
-        },
-        LIKE: (a, b) => { 
-          a = a.toLowerCase();
-          b = b.toLowerCase().slice(3, -3).replace(/%/g, ".*");
-          // console.log(a, b);
-          return new RegExp(b).test(a);
-        }
-      };
-
-      // Handle nested conditions
-      if (cond.includes("(")) {
-        let subCond = cond.match(/\(([^()]+)\)/);
-        if (subCond) {
-          let result = evaluate(record, subCond[1]);
-          cond = cond.replace(/\(([^()]+)\)/, result ? "true" : "false");
-          return evaluate(record, cond);
-        }
-      }
-
-      let reducer = (acc, part, index, parts) => {
-        if (part === "AND" || part === "OR") {
-          let prevEval = evaluate(record, parts[index - 1]);
-          let nextEval = evaluate(record, parts[index + 1]);
-          return part === "AND" ? acc && prevEval && nextEval : acc || prevEval || nextEval;
-        } else if (index % 2 === 0) {
-          // Evaluate conditions not within AND/OR
-          // Adjusted regex to correctly capture the '?' as a placeholder
-          let match = part.match(/(\w+)\s*(=|LIKE)\s*(['"]?)(\?|.*?)\3/);
-          if (match) {
-            let [, field, operator, , valuePlaceholder] = match;
-            let value = valuePlaceholder === "?" ? `${tmp.shift()}` : valuePlaceholder.replace(/^['"]|['"]$/g, "");
-            // Check if the field is in the schema
-            let columnMetaData = schema[field];
-            if (!columnMetaData) throw new Error(`Field ${field} does not exist.`);
-            // if (columnMetaData.type == "TEXT") value = encodeBase64(value);
-
-            // console.log("Filtering WHERE:", field, operator, { value, columnMetaData });
-            let dbColVal = record[field];
-            dbColVal = columnMetaData.type == "TEXT" ? decodeBase64(dbColVal) : dbColVal;
-
-            // Use the comparison functions to evaluate
-            return compareFns[operator](dbColVal, value);
-          }
-          return false;
-        }
-        return acc;
-      };
-
-      let parts = cond.split(/\s+(AND|OR)\s+/);
-      return parts.reduce(reducer, true);
+        // Extract individual conditions from the SQL-like query
+        let tokens = cond.match(/(\w+)\s*(=|LIKE)\s*(['"]?)(.+?)\3/g);
+        return tokens.every(token => {
+            let [full, field, operator, , value] = token.match(/(\w+)\s*(=|LIKE)\s*(['"]?)(.+?)\3/);
+            if (value === '?') value = params.shift(); // Replace placeholders with actual parameters
+            let dbValue = record[field] || ''; // <- 👀 Could this be an issue? 
+            // console.log('dbValue', field, dbValue)
+            if (schema[field].type === "TEXT") dbValue = decodeURIComponent(escape(atob(dbValue))); // Decode base64 if the field type is TEXT
+            return ops[operator](dbValue, value);
+        });
     };
 
-    // Filter the records based on the condition
-    let tmp = false;
-    return records.filter(record => {
-      tmp = [...params];
-      return evaluate(record, condition);
-    });
+    // Filter records by evaluating each against the condition with parameters
+    return records.filter(record => evaluate(record, condition, [...params]));
   }
 
   orderBy(records, clause) {
@@ -368,8 +339,9 @@ class SQLDatabase {
     // console.log("TABLE:UPDATING:",
 
     Object.keys(updates).forEach(key => {
+      console.log("TABLE:UPDATING:", { table, key, updates, record });
       let columnMetaData = table.schema[key];
-      let dne = !record.hasOwnProperty(key);
+      let dne = !table.schema.hasOwnProperty(key);
       if (dne) throw new Error(`Field ${key} does not exist.`);
       let nul = columnMetaData.notNull && updates[key] === undefined;
       if (nul) throw new Error(`Field ${key} cannot be null.`);
@@ -378,7 +350,7 @@ class SQLDatabase {
       if (columnMetaData.type == "TEXT") newVal = encodeBase64(newVal);
 
       record[key] = newVal;
-      console.log("* TABLE:UPDATE:", tableName); //{ tableName, key, updates, table, setClause, record });
+      // console.log("* TABLE:UPDATE:", tableName); //{ tableName, key, updates, table, setClause, record });
     });
 
     table.records = table.records.map(rec => (rec.id === record.id ? record : rec));

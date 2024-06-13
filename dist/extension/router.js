@@ -54,10 +54,11 @@ async function routeToServer(method, endpoint, body) {
 
 async function route(event, endpoint, fetchType = false, cb = false) {
   let responseData = undefined;
+  let response = false;
   if (!event && !endpoint && typeof fetchType == "string") {
     // console.log('Route: "GET_JSON" from localStorage', fetchType);
     responseData = localStorage.getItem(fetchType);
-    try {
+    try { 
       let temp = JSON.parse(responseData);
       responseData = temp;
     } catch (e) {}
@@ -89,22 +90,23 @@ async function route(event, endpoint, fetchType = false, cb = false) {
       window.loading.style.display = "none";
       return response;
     }
-    window.email && (responseData = await routeToServer(route.endpoint, endpoint, body, lsKey));
-    !window.email && (responseData = await routeToClient(route.endpoint, endpoint, body, lsKey));
+    window.email && (response = await routeToServer(route.endpoint, endpoint, body, lsKey));
+    !window.email && (response = await routeToClient(route.endpoint, endpoint, body, lsKey));
     if (fetchType == "POST_BLOB") { 
-      console.log("Route:END:method:", { endpoint, fetchType, responseData });
-      responseData = await responseData.blob();
-      window.loading.style.display = "none";
+      console.log("Route:END:method:", { endpoint, fetchType, response });
+      responseData = response && await response?.blob();
+      window.loading.style.display = "none";    
       showToast();
       return responseData;
     }
-    if (!responseData?.status == "success") {
-      console.error("ROUTER:ERROR: Response not OK.", endpoint);
-      return;
+    if (!response?.status == "success") {
+      console.error("ROUTER:ERROR:endpoint:", { endpoint, response });
+      return false;
     }
 
-    responseData = responseData.data;
+    responseData = response.data;
     if (lsKey) {
+      console.log('SAVING KEY:', lsKey, responseData)
       localStorage.setItem(lsKey, typeof responseData == "string" ? responseData : JSON.stringify(responseData));
     }
   }

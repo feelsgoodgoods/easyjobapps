@@ -3,7 +3,7 @@ const fs = require('fs')
 const { queryDb } = require('./misc');
 
 
-require('dotenv').config();
+// require('dotenv').config();
 
 // Function to send email 
 async function email_send(body) {
@@ -54,7 +54,6 @@ async function email_send(body) {
             let parts = path.split('.');
             let ext = parts.pop();
             let name = parts.join('.');
-            //todo fix defaultName
             let newName = `${name}-${jobTitle.replace(' ', '_')}-${defaultName.replace(' ', '_')}-${companyName.replace(' ', '_')}.pdf`;
             // copy not rename
             fs.copyFileSync(path, newName);

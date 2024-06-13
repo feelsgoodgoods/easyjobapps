@@ -1,9 +1,33 @@
 let key = false;
-if (!window) {
-  require("dotenv").config();
-  key = process.env.YOUR_OPENAI_API_KEY;
+let misc = false 
+let queryDb = false
+let inBrowser = typeof window != 'undefined';
+let cfpages = typeof process == 'undefined'; 
+let getKey = async () => {
+  if (!inBrowser) {
+    if(!cfpages){
+      console.log('inDev')
+      // require("dotenv").config();
+      key = process.env.YOUR_OPENAI_API_KEY;
+    }else{
+      key = ''
+      console.log("Server: Error. No key.");
+    } 
+  }
+  else{
+    // console.log('inBrowser')
+    let val = localStorage.getItem("openaikey");
+    let exists = val != "undefined";
+    if (exists) {
+      key = JSON.parse(val);
+      key = key?.[0]?.text || false;
+    } else {
+      key = ''
+      console.log("Browser: Error. No key.");
+    }
+  }
+  return key;
 }
-
 /*
 gpt-3.5-turbo-0125 is the flagship model of this family, supports a 16K context window and is optimized for dialog.
 gpt-3.5-turbo-0125	Max: 16,385 tokens, Input: $0.0005 / 1K tokens, Output:	$0.0015 / 1K tokens
@@ -15,17 +39,14 @@ gpt-3.5-turbo-instruct	$0.0015 / 1K tokens	$0.0020 / 1K tokens
 
 // input_tokens: 16,385, output_tokens: min(4096, remaining_input_tokens)
 // MAX BACK 4096 tokens
-async function callChatGPT(post, type = "gpt-3.5-turbo-0125", max_tokens = 4096, tools = false, chat = false) {
-  if (window && !key) {
-    let val = localStorage.getItem("openaikey");
-    let exists = val != "undefined";
-    if (exists) {
-      key = JSON.parse(val);
-      key = key?.[0]?.text || false;
-    } else {
-      console.log("Error. No key.");
-    }
-  }
+async function callChatGPT(
+  post, 
+  type = "gpt-3.5-turbo-0125", 
+  max_tokens = 4096, 
+  tools = false, 
+  chat = false
+) {
+  let key = await getKey();
   //"gpt-3.5-turbo" // "gpt-4"
   // https://platform.openai.com/docs/models/gpt-3-5
   // https://platform.openai.com/docs/models/overview
@@ -44,10 +65,6 @@ async function callChatGPT(post, type = "gpt-3.5-turbo-0125", max_tokens = 4096,
 
     // note that the message content may be partially cut off if finish_reason="length",
     // which indicates the generation exceeded max_tokens or the conversation exceeded the max context length.
-
-    //let le = enc.encode(JSON.stringify(post)).length
-    // console.log('tools, chat', tools, chat)
-
     let data = {
       model: type,
       messages: post,
@@ -67,6 +84,11 @@ async function callChatGPT(post, type = "gpt-3.5-turbo-0125", max_tokens = 4096,
       let chatGPTResponse;
       const responseData = await response.json();
       // console.log("gotback", responseData);
+      if(responseData.error){
+        console.log('gptcall:error:', responseData.error)
+        console.log({data})
+        return false
+      }
       if (tools) {
         chatGPTResponse = responseData.choices[0].message.tool_calls[0];
       } else {

@@ -1,9 +1,9 @@
 const routes = [
   { endpoint: "/userinfo_view:label", method: "get", action: "db.userinfo_view" },
-  { endpoint: "/userinfo_create", method: "post", action: "db.userinfo_create" },
+  { endpoint: "/userinfo_upload", method: "post", action: "db.userinfo_upload" },
   { endpoint: "/userinfo_update", method: "post", action: "db.userinfo_update" },
   { endpoint: "/userinfo_remove", method: "post", action: "db.userinfo_remove" },
-  { endpoint: "/userinfo_update_single", method: "post", action: "db.bio_update" },
+  { endpoint: "/userinfo_update_settings", method: "post", action: "db.bio_update" },
   { endpoint: "/post_create", method: "post", action: "gpt.post_create" },
   { endpoint: "/post-update-status", method: "post", action: "db.post_update_status" },
   { endpoint: "/post-remove", method: "post", action: "gpt.remove_post" },
@@ -31,11 +31,11 @@ const routes = [
   { endpoint: "/cover-letter-generate", method: "post", action: "gpt.cover_letter_generate" },
   { endpoint: "/email-generate", method: "post", action: "gpt.email_generate" },
   { endpoint: "/email-send", method: "post", action: "gpt.email_send" },
-  { endpoint: "/apply", method: "post", action: "gpt.email_send" },
-  { endpoint: "/extension-fill-form", method: "post", action: "gpt.extension_fill_form" },
+  { endpoint: "/apply", method: "post", action: "gpt.email_send" }, 
+  { endpoint: '/extension_fill_form', method: 'post', action: 'gpt.extension_fill_form' },
   { endpoint: "/extension-post-fetch", method: "post", action: "db.extension_post_fetch" },
   { endpoint: "/extension-post_create", method: "post", action: "gpt.extension_post_create" },
-  { endpoint: "/extension-ask-question", method: "post", action: "gpt.extension_ask_question" }
+  { endpoint: "/extension_ask_question", method: "post", action: "gpt.extension_ask_question" }, 
 ];
 
 export { routes };

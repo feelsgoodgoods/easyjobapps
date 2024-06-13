@@ -1,23 +1,39 @@
-// console.log("dbroutes.js: Loaded");
-
-let misc = false;
-if (window) {
-  misc = await import("./misc.js");
-} else {
-  require("dotenv").config();
-  misc = await import("../utils/misc.js");
+console.log("dbroutes.js: Loaded");
+  
+let misc = false 
+let queryDb = false
+let inBrowser = typeof window != 'undefined';
+let cfpages = typeof process == 'undefined';
+  
+let getDb = async () => {
+  if (inBrowser) {
+    console.log('dbroutes:BROWSER' )
+    misc = await import("./misc.js");
+  }
+  else{
+    if(!cfpages){
+      console.log('server:dbroutes:DEV' );
+    }
+    else{
+      console.log('server:dbroutes:CF_PAGES' );
+    }
+    misc = await import("../../utils/misc.js");
+  } 
+  queryDb = misc.queryDb;
+  return queryDb;
 }
-let queryDb = misc.queryDb;
 
-import { dbutils } from "./dbgptutils.js";
-import { pup } from "./puproutes.js";
+import { dbutils } from "./dbgptutils.js"; 
+// import { pup } from "./puproutes.js";
+let pup = {}
 
 //~~~~ User Info
 //
 async function userinfo_view(body) {
+  !queryDb && await getDb();
   // console.group("db:userinfo_view");
   let { label } = body;
-  // console.log("DB:userinfo_view: ", body);
+  // console.log("DB:userinfo_view: ", body); 
   let str = `SELECT id, text, title FROM userinfo WHERE label = ? ORDER BY id DESC`;
   let rows = await queryDb(str, [label]);
   // console.log("userinfo_view:received:", { label, rows });
@@ -26,28 +42,34 @@ async function userinfo_view(body) {
 }
 
 //
-async function userinfo_create(body) {
-  console.group("db:userinfo_create", body);
-  let { label, text, title } = body;
+async function userinfo_upload(body) {
+  !queryDb && await getDb();
+  console.group("db:userinfo_upload", body);
+  let { label, text, title } = body; 
+  
+  // console.log('db:userinfo_upload:SELECT id FROM userinfo WHERE title = ',title,' and label=', label)
   let existingRecord = await queryDb("SELECT id FROM userinfo WHERE title = ? and label=?", [title, label]);
   if (!existingRecord.length) {
     // console.log('Inserting')
     const insertSql = `INSERT INTO userinfo (text, title, label) VALUES (?, ?, ?)`;
-    existingRecord = await queryDb(insertSql, [text, title, label]);
-  } else {
-    console.log("Record not added");
+    let newRecord = await queryDb(insertSql, [text, title, label]);
+    console.groupEnd();
+    return { status: "success", data: newRecord };
   }
-  return { status: "success", data: existingRecord };
+  console.log("db:Record already exists", existingRecord);
+  console.groupEnd();
+  return { status: "failure", data: false };
 }
 
 //
 async function userinfo_update_single(body) {
+  !queryDb && await getDb();
   console.group("db:userinfo_update_single", body);
   let { fullname, bio, openaikey } = body;
   let data = false;
   let label = (fullname && "fullname") || (bio && "bio") || (openaikey && "openaikey");
   let value = fullname || bio || openaikey;
-  //  console.log("DB:USERINFO_UPDATE_SINGLE", body);
+  //  console.log("DB:USERINFO_UPDATE_SINGLE", body); 
   const existingRecord = await queryDb("SELECT id FROM userinfo WHERE label = ?", [label]);
   if (!existingRecord.length) {
     console.log(":INSERT:");
@@ -60,15 +82,27 @@ async function userinfo_update_single(body) {
     data = await queryDb(updateSql, [value, label]);
     console.log(`${label} updated successfully`);
   }
+  console.groupEnd();
   return { status: "success", data };
+}
+async function userinfo_update_settings(body) {
+  console.group("db:userinfo_update_settings", body);
+  let { fullname, bio, openaikey } = body; 
+  let data;
+  // const dataf = await userinfo_update_single({ fullname });
+  const datab = await userinfo_update_single({ bio });
+  const datao = await userinfo_update_single({ openaikey });
+  data = { dataf, datab, datao };
+  console.groupEnd();
+  return { status: "success", data : body };
 }
 
 //
 async function userinfo_update(body) {
   console.group("db:userinfo_update");
-  let { userinfo_id, text } = body;
+  let { userinfoid, text } = body;
   console.log("DB:USERINFO_UPDATE: ", body);
-  let id = parseInt(userinfo_id);
+  let id = parseInt(userinfoid);
   // Check if the record exists
   const checkSql = `SELECT id FROM userinfo WHERE id = ?`;
   const record = queryDb(checkSql, [id]);
@@ -87,9 +121,9 @@ async function userinfo_update(body) {
 //
 async function userinfo_remove(body) {
   console.group("db:userinfo_remove");
-  let { userinfo_id } = body;
+  let { userinfoid } = body;
   console.log(body);
-  let id = parseInt(userinfo_id);
+  let id = parseInt(userinfoid);
   let data = await queryDb(`DELETE FROM userinfo WHERE id = ?;`, [id]);
   console.groupEnd();
   return {
@@ -302,6 +336,8 @@ async function extension_post_fetch(body) {
   };
 }
 
+
+
 //DBFN // match where company name is substring of companyName
 async function search_company(body) {
   let { companyName } = body;
@@ -330,15 +366,22 @@ async function getpostcreate(jobPost) {
 }
 
 async function generate_pdf(body) {
-  let latexCode = false; //"\\documentclass{article}\\begin{document}Hedddddddllol, World!\\end{document}";
+  let latexCode = false; // "\\documentclass{article}\\begin{document}Hello, World!\\end{document}";
+  let { id, newResume, newCoverLetter, type } = body;
   let url = "https://api.charleskarpati.com/resumes/compile" || "http://localhost/compile";
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ latex: latexCode || body.newResume || body.newCoverLetter })
+  let text = latexCode || newResume || newCoverLetter;
+  console.group("dbroutes:generate_pdf:", { text , url, type, id, body })
+  if(!text){ return false } 
+ 
+  const response = await fetch(url, { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ latex: text })
   });
+  if(id && type){
+    // console.log(`UPDATE posts SET ${type} = text WHERE id = ${id}`)
+    await queryDb(`UPDATE posts SET ${type} = ? WHERE id = ?`, [text, id]);
+  }
+  console.groupEnd();
   return response;
 }
 
@@ -346,12 +389,12 @@ async function generate_pdf(body) {
 
 let db = {
   generate_pdf,
-  userinfo_create,
+  userinfo_upload,
   userinfo_view,
   userinfo_update,
   userinfo_remove,
   post_view,
-  userinfo_update_single,
+  userinfo_update_settings,
   search_company,
   ...dbutils
 };

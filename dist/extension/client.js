@@ -12,37 +12,79 @@ import { route, showToast } from "./router.js";
 // Retrieve from Db and SET into LOCALSTORAGE [email, name, openaikey, bio, res/cl/email stuff]
 // Sets EVT LISTENERS on their associated inputs
 //
-async function startScript() {
+
+
+function throttle(func, limit) {
+  let lastFunc;
+  let lastRan; 
+  return function() {
+    console.log('throttted')
+    const context = this;
+    const args = arguments;
+    if (!lastRan) {
+      lastRan = Date.now();
+      lastFunc = setTimeout(function() {
+        console.log('runing first')
+        func.apply(context, args);
+      }, limit);
+    } else {
+      console.log('runing second')
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(function() {
+        if (Date.now() - lastRan >= limit) {
+          func.apply(context, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
+    }
+  };
+}
+ 
+
+// Get User Info
+async function getLocalUserInfo() {
   console.groupCollapsed(":client:load:"); //groupCollapsed
   console.log(Date());
   let w = window;
 
   // get
-  let email = (await localStorage.getItem("email")) || false;
-  let name = await route(false, "/userinfo_view/fullname", "fullname", arr => arr[0]?.text || "");
-  let key = await route(false, "/userinfo_view/openaikey", "openaikey", arr => arr[0]?.text || "");
-  let bio = await route(false, "/userinfo_view/bio", "bio", arr => arr[0]?.text || "");
+  let email = await route(false, false, "email") || false;
+  let settings = await route(false, false, "settings"); // /userinfo_view/settings 
+  
+  let name, bio, key
+  if(settings){
+    console.log('settings') 
+    key = settings.openaikey;
+    // name = settings.fullname;
+    bio = settings.bio;
+    // w.fullname.value = name;
+    w.openaikey.value = key;
+    w.bio.value = bio;
+  }
 
-  // set
-  w.fullname.value = name;
-  w.openaikey.value = key;
-  w.bio.value = bio;
-
-  // listen
-  let throt = (e, name) => throttle(e => (e.preventDefault(), route(e, "/userinfo_update_single", name)), 500);
-  w.openaikey.addEventListener("input", e => {
-    throt(e, "openaikey");
-    // setTimeout(startScript, 1000);
-    setTimeout(window.loadFn, 1000);
-  });
-
-  w.fullname.addEventListener("input", throt("fullname"));
-  w.openaikey.addEventListener("input", throt("bio"));
-  document.querySelector("button[name='updatebio']").onclick = throt("bio");
+  // document.getElementById('template-select').addEventListener('change', function() {
+  //   var messageDiv = document.getElementById('regenmessage');
+  //   if (this.value == '1') {
+  //     messageDiv.style.display = 'none';
+  //   } else {
+  //     messageDiv.style.display = 'block';
+  //   }
+  // });
+  
+  // todo uploadeddocuments
+  // window.newdocument.onclick = async e => {
+  //   e.preventDefault()
+  //   window.documenteditor.style.display = 'block'
+        
+  // }
 
   // New Users
   let isUser = key || email;
-  if (!isUser) return false;
+  if (!isUser){ 
+    console.groupEnd();
+    return { //fullname: name, 
+      openaikey: key, bio}
+  }
 
   // get
   const sortDefaultFirst = arr => (arr?.length < 2 && arr) || arr.sort((a, b) => (a.title.toLowerCase() === "default" ? -1 : b.title.toLowerCase() === "default" ? 1 : a.title.localeCompare(b.title)));
@@ -53,27 +95,9 @@ async function startScript() {
   let emails = await route(false, "/userinfo_view/emailtemplates", "emailtemplates", sortDefaultFirst);
   let emailmessages = await route(false, "/userinfo_view/emailmessages", "emailmessages", sortDefaultFirst);
 
-  //
-  // set              USERINFO TEMPLATE
-  // listen on:       [upload, display]
-  // of each of type: [template, message]
-  // for each lbl:    [resume, coverletter, email]
-  //
-  let createUploadPanel = lbl => {
-    // Prep the template
-    let div = document.createElement("div");
-    let template = window.userinfotemplate.content.cloneNode(true);
-    div.innerHTML = template.firstElementChild.outerHTML.replace(/{{{replace}}}/g, lbl);
-    div.querySelectorAll(`button`).forEach(btn => (btn.onclick = userinfo_upload));
-    div.querySelector('summary[name="templates"]').onclick = e => userinfo_list("template", lbl);
-    div.querySelector('summary[name="messages"]').onclick = e => userinfo_list("message", lbl);
-    window.biocontainer.insertAdjacentElement("afterend", div);
-  };
-  ["resume", "coverletter", "email"].map(t => createUploadPanel(t));
-
   let userinfo = {
     email,
-    fullname: name,
+    // fullname: name,
     openaikey: key,
     bio,
     resumes,
@@ -87,26 +111,27 @@ async function startScript() {
   return userinfo;
 }
 
-function throttle(func, limit) {
-  let lastFunc;
-  let lastRan;
-  return function () {
-    const context = this;
-    const args = arguments;
-    if (!lastRan) {
-      func.apply(context, args);
-      lastRan = Date.now();
-    } else {
-      clearTimeout(lastFunc);
-      lastFunc = setTimeout(function () {
-        if (Date.now() - lastRan >= limit) {
-          func.apply(context, args);
-          lastRan = Date.now();
-        }
-      }, limit - Date.now() - lastRan);
-    }
+
+  //
+  // set              USERINFO TEMPLATE
+  // listen on:       [upload, display]
+  // of each of type: [template, message]
+  // for each lbl:    [resume, coverletter, email]
+  //
+  /*
+  let createUploadPanel = lbl => { 
+    // Prep the template
+    let div = document.createElement("div");
+    let template = window.userinfotemplate.content.cloneNode(true);
+    div.innerHTML = template.firstElementChild.outerHTML.replace(/{{{replace}}}/g, lbl);
+    div.querySelectorAll(`button`).forEach(btn => (btn.onclick = userinfo_upload));
+    // div.querySelector('summary[name="templates"]').onclick = e => userinfo_list("template", lbl);
+    // div.querySelector('summary[name="messages"]').onclick = e => userinfo_list("message", lbl);
+    console.log('appending', lbl)
+    window.documentscontainer.appendChild(div);
   };
-}
+  ["resume", "coverletter", "email"].map(t => createUploadPanel(t));
+  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -116,8 +141,15 @@ function throttle(func, limit) {
 async function userinfo_upload(e) {
   console.group("CLIENT:USERINFO_UPLOAD:"); // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
   e.preventDefault();
-  let clicked = e.target.form.querySelector("[name='label']").value; //lbl+s = resumes
-  let contents = await route(e, "/userinfo_create", clicked);
+  let clicked = e.target.form.querySelector("[name='label']").value; // == lbl+type+s
+  let contents = await route(e, "/userinfo_upload");
+  if (!contents){ 
+    console.groupEnd();
+    return;
+  }
+  let ls = JSON.parse(localStorage.getItem(clicked)) || [];
+  ls.push(contents); 
+  localStorage.setItem(clicked, JSON.stringify(ls));
   let summaries = document.querySelectorAll('summary[name="uploadedTemplates"]');
   summaries.forEach(summary => {
     let details = summary.closest("details");
@@ -187,26 +219,87 @@ function userinfo_update(e) {
 //
 
 //
+// Updates LS postData.
 async function generate_resume(event) {
   console.group(":generateResume:Using: ", event.target.form);
   event.preventDefault(event);
   let startTime = new Date().getTime();
-  let data = await route(event, "/resume_generate");
+  // check post data. 
+  let resp = await route(event, "/resume_generate"); // returns text
+  if (!resp) {
+    console.groupEnd();
+    return;
+  }
+  let { newResume } = resp; 
+
+  let postData = await route(false, false, "postdata");
+  postData.resume = newResume; 
+  localStorage.setItem("postdata", JSON.stringify(postData));       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Local Storage
+  postData.newResume = newResume; 
 
   let endTime = new Date().getTime();
   let lapse = endTime - startTime;
   let lapseInSeconds = (lapse / 1000).toFixed(2);
   console.log(`Operation took ${lapseInSeconds} seconds`);
-  display_pdf_text("resume", data);
+  await display_generated_text("resume", postData);
   console.groupEnd();
 }
 
+// Also attaches [Download, Refresh] event listeners.
+async function display_generated_text(lbl, postData, generatePdf = true) {
+  console.group(':Display Generated:', lbl, {postData});
+
+  // Get the text
+  let { company_id, id, newResume, resume, newCoverLetter } = postData;
+  let newText = lbl === "resume" ?  (newResume || resume) : newCoverLetter; 
+  let jobPostContainer = document.getElementById(`post-${company_id}-${id}`) || window.generatecontentcontainer;
+  if(!newText){ console.log(':display_generated_text:NO TEXT TO DISPLAY'); console.groupEnd(); return }
+
+  // Display the text
+  jobPostContainer.querySelector(`[name="new${lbl}"]`).value = newText;
+
+  let url = await generatepdf(lbl, postData, generatePdf); 
+  console.log('URL:', url)
+ 
+  if (url) {
+    // open in new tab.  
+    jobPostContainer.querySelector(`[name='preview${lbl}']`).src = url;
+    jobPostContainer.querySelector(`[name='refresh${lbl}']`).style.display = "inline-block";
+    jobPostContainer.querySelector(`[name='download${lbl}']`).style.display = "inline-block";
+    jobPostContainer.querySelector(`[name='preview${lbl}']`).style.display = "inline-block";
+    jobPostContainer.querySelector(`[name='resumepdflink']`).href = url;
+
+    // Event Listener - Refresh
+    let refreshBtn = jobPostContainer.querySelector(`[name="refresh${lbl}"]`);
+    refreshBtn.onclick = async event => { 
+      event.preventDefault(); 
+      let newResume = window.newresume.value;
+      postData.resume = newResume; 
+      localStorage.setItem("postdata", JSON.stringify(postData)); // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Local Storage
+      postData.newResume = newResume;
+      await display_generated_text(lbl, postData, true); 
+    };
+
+    // Event Listener - Download
+    let downloadPdf = (body) => {
+      let {lbl, company_id, id} = body
+      let a = document.createElement("a");
+      a.href = jobPostContainer.querySelector(`[name="preview${lbl}"]`).src;
+      a.download = `${lbl}-${company_id}-${id}.pdf`;
+      a.click();
+    };
+    let downloadBtn = jobPostContainer.querySelector(`[name="download${lbl}"]`);
+    downloadBtn.onclick = async event => { event.preventDefault(); await downloadPdf({lbl, company_id, id}); };
+  }
+  console.groupEnd();
+  return 
+}
+
 async function generatepdf(lbl, body, generatePdf) {
-  console.log("generate_pdf", body);
+  console.log(":client:generatepdf:force:"+ generatePdf);
   let jobPostContainer = document.getElementById(`post-${body.company_id}-${body.post_id}`);
   if (!jobPostContainer) {
-    jobPostContainer = window.generatecontentcontainer;
-    // data = JSON.parse(localStorage.getItem("postData")) || {};
+    jobPostContainer = window.generatecontentcontainer; 
   }
   async function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
@@ -218,21 +311,23 @@ async function generatepdf(lbl, body, generatePdf) {
       reader.readAsDataURL(blob);
     });
   }
-  let url;
-  if (generatePdf || !localStorage.getItem(`${lbl}PdfUrl`)) {
+  let url = false;
+  let pdfUrl = await route(false, false, `${lbl}PdfUrl`)             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Local Storage
+  if (generatePdf || !pdfUrl) {
     try {
-      let blob = await route(body, "/generate_pdf", "POST_BLOB", false);
+      body.type = lbl;
+      let blob = await route(body, "/generate_pdf", "POST_BLOB", false); 
       if (blob) {
         let base64 = await blobToBase64(blob);
-        localStorage.setItem(`${lbl}PdfUrl`, base64);
+        localStorage.setItem(`${lbl}PdfUrl`, base64);                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Local Storage
         url = URL.createObjectURL(blob);
       }
     } catch (error) {
-      console.error("Failed to generate or fetch PDF: ", error);
-      return;
+      console.error("Failed to generate or fetch PDF: ", error); 
+      return false;
     }
   } else {
-    let base64 = localStorage.getItem(`${lbl}PdfUrl`);
+    let base64 = pdfUrl;
     let byteString = atob(base64.split(",")[1]);
     let mimeString = base64.split(",")[0].split(":")[1].split(";")[0];
     let ia = new Uint8Array(byteString.length);
@@ -240,70 +335,13 @@ async function generatepdf(lbl, body, generatePdf) {
       ia[i] = byteString.charCodeAt(i);
     }
     let blob = new Blob([ia], { type: mimeString });
+    // console.log(`${lbl}PdfUrl`, !!pdfUrl, byteString, mimeString) 
     url = URL.createObjectURL(blob);
-  }
-
+  } 
   return url;
 }
-
-// Also attaches [Download, Refresh] event listeners.
-async function display_pdf_text(lbl, body, generatePdf = true) {
-  console.log(":display_pdf_text:", body);
-  let { company_id, post_id, newResume, newCoverLetter } = body;
-  let newText = lbl === "resume" ? newResume : newCoverLetter;
-  let jobPostContainer = document.getElementById(`post-${company_id}-${post_id}`) || window.generatecontentcontainer;
+export { route, showToast, throttle, getLocalUserInfo, generate_resume, display_generated_text };
 
   // Save the text
-  localStorage.setItem(`${lbl}Latex`, newText);
-
-  // Display the text
-  let genText = jobPostContainer.querySelector(`[name="new${lbl}"]`);
-  genText.value = newText;
-  /*
-  let generate_pdf = async () => {
-    console.log("generate_pdf", body); 
-
-    let pdfUrl = URL.createObjectURL(blob);
-    let preview = jobPostContainer.querySelector(`[name="preview${lbl}"]`);
-    preview.src = pdfUrl;
-    preview.style.display = "inline-block";
-    // localStorage.setItem(`${lbl}PdfUrl`, pdfUrl);
-    return pdfUrl;
-  };  */
-
-  let url = await generatepdf(lbl, body, generatePdf);
-
-  console.log("yay", body, url);
-
-  // lbl === "resume" ?
-  if (url) {
-    jobPostContainer.querySelector(`[name='preview${lbl}']`).src = url;
-    jobPostContainer.querySelector(`[name='refresh${lbl}']`).style.display = "inline-block";
-    jobPostContainer.querySelector(`[name='download${lbl}']`).style.display = "inline-block";
-    jobPostContainer.querySelector(`[name='preview${lbl}']`).style.display = "inline-block";
-    // let link = window.resumePdfLink
-  }
-
-  let downloadPdf = () => {
-    let a = document.createElement("a");
-    a.href = jobPostContainer.querySelector(`[name="preview${lbl}"]`).src;
-    a.download = `${lbl}-${window.name}-${company_id}-${post_id}.pdf`;
-    a.click();
-  };
-
-  // Event Listener - Refresh
-  let refreshBtn = jobPostContainer.querySelector(`[name="refresh${lbl}"]`);
-  refreshBtn.onclick = event => {
-    event.preventDefault();
-    display_pdf_text(lbl, {}, true);
-  };
-
-  // Event Listener - Download
-  let downloadBtn = jobPostContainer.querySelector(`[name="download${lbl}"]`);
-  downloadBtn.onclick = event => {
-    event.preventDefault();
-    downloadPdf();
-  };
-}
-
-export { route, showToast, throttle, startScript, generate_resume, display_pdf_text as displayPdfText };
+  // localStorage.setItem(`${lbl}Latex`, newText);
+  // latex = JSON.parse(localStorage.getItem("resumetemplates"))[0].text; 

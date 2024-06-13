@@ -1,15 +1,27 @@
-require("dotenv").config();
-const nodemailer = require("nodemailer");
+let key = false; 
+let cfpages = typeof process == 'undefined' 
+let db = false;   
+console.log('server:misc:START' )
+if (!cfpages) {   
+  console.log('server:misc:DEV' )
+  // require("dotenv").config();
+  // nodemailer = require("nodemailer");
+  // const sqlite3 = require("sqlite3").verbose();
+  // db = new sqlite3.Database("./resumeai.db", err => {
+  //   if (err) {
+  //     console.error(err.message);
+  //   }
+  //   console.log("Connected to the database.");
+  // });
+  key = process.env.YOUR_OPENAI_API_KEY; 
+} 
+else{ 
+  console.log('server:misc:CF_PAGES' )    
+}
 
-const sqlite3 = require("sqlite3").verbose();
-let db = new sqlite3.Database("./resumeai.db", err => {
-  if (err) {
-    console.error(err.message);
-  }
-  console.log("Connected to the database.");
-});
-
-function queryDb(sql, params = []) {
+function queryDb(sql, params = [], env={}) { 
+  db = env.cfdb || db;
+  key = env.cfkey || key;
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) return reject(err);
@@ -18,6 +30,13 @@ function queryDb(sql, params = []) {
   });
 }
 
+module.exports = {
+  queryDb,
+  // viewDbStructure,
+  // executeWorkerFunction
+};
+
+/*
 async function sendEmail(recipientEmail, subject, text, html) {
   try {
     // Create a transporter
@@ -105,9 +124,5 @@ async function viewDbStructure(res) {
     });
   });
 }
-
-module.exports = {
-  queryDb,
-  viewDbStructure,
-  executeWorkerFunction
-};
+*/
+ 

@@ -1,6 +1,12 @@
 import { db } from "./dbroutes.js";
 
-let { getSitemap, crawlUrl, scrapeLinks, search_companyOnDuckDuckGo } = window ? await import("./puputils.js") : await import("../utils/puputils.js");
+let { getSitemap, crawlUrl, scrapeLinks, search_companyOnDuckDuckGo } 
+  = 
+  window 
+    ? 
+    await import("./puputils.js") 
+    : 
+    await import("../utils/puputils.js");
 
 async function crawlCompanyName(name) {
   return await search_companyOnDuckDuckGo(name);

@@ -1,13 +1,25 @@
 let misc = false;
-if (window) {
-  misc = await import("./misc.js");
-} else {
-  require("dotenv").config();
-  misc = await import("../utils/misc.js");
+let browser = typeof window != 'undefined'
+let cfpages = typeof process == 'undefined' 
+let queryDb = async (sql, params = [], env={}) => {
+  if (browser) {
+    // console.log('dbroutes:BROWSER' )
+    misc = await import("./misc.js");
+  }
+  else{
+    if(!cfpages){
+      console.log('server:dbroutes:DEV' );
+    }
+    else{
+      console.log('server:dbroutes:CF_PAGES' );
+    }
+    misc = await import("../../utils/misc.js");
+  } 
+  queryDb = misc.queryDb;
+  queryDb(sql, params, env);
 }
-let queryDb = misc.queryDb;
 
-function createAuthTable() {
+let createAuthTable = async () => {  
   queryDb(`CREATE TABLE IF NOT EXISTS registrations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
@@ -16,10 +28,9 @@ function createAuthTable() {
         tempToken TEXT,
         uuid TEXT
     )`);
-}
-createAuthTable();
-
-function createUserInfoTable() {
+} 
+ 
+let createUserInfoTable = async () => {  
   queryDb(`CREATE TABLE IF NOT EXISTS userinfo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         dateAdded INTEGER DEFAULT (strftime('%s','now','localtime')),
@@ -30,9 +41,9 @@ function createUserInfoTable() {
         post_id INTEGER DEFAULT 0
     )`);
 }
-createUserInfoTable();
+ 
 
-function createCompanyTable() {
+let createCompanyTable = async () => {   
   queryDb(`CREATE TABLE IF NOT EXISTS companies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         dateAdded INTEGER DEFAULT (strftime('%s','now','localtime')),
@@ -40,18 +51,16 @@ function createCompanyTable() {
         websiteUrl TEXT,
         companyName TEXT
     )`);
-}
-createCompanyTable();
+} 
 
-function createJunkTable() {
+let createJunkTable = async () => {   
   queryDb(`CREATE TABLE IF NOT EXISTS junk (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT
     )`);
-}
-createJunkTable();
+} 
 
-function createPostsTable() {
+let createPostsTable = async () => {  
   queryDb(`CREATE TABLE IF NOT EXISTS posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         dateAdded INTEGER DEFAULT (strftime('%s','now','localtime')),
@@ -65,10 +74,9 @@ function createPostsTable() {
         resume TEXT,
         coverLetter TEXT
     )`);
-}
-createPostsTable();
+} 
 
-function createSitemapTable() {
+let createSitemapTable = async () => {   
   queryDb(`CREATE TABLE IF NOT EXISTS sitemaps (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         link TEXT UNIQUE,
@@ -78,10 +86,9 @@ function createSitemapTable() {
         company_id INTEGER,
         text TEXT
       );`);
-}
-createSitemapTable();
+} 
 
-function createExtractsTable() {
+let createExtractsTable = async () => {   
   queryDb(`CREATE TABLE IF NOT EXISTS extracts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER,
@@ -94,7 +101,14 @@ function createExtractsTable() {
         link TEXT,
         text TEXT
     )`);
-}
+} 
+
+createAuthTable();
+createUserInfoTable();
+createCompanyTable();
+createJunkTable();
+createPostsTable();
+createSitemapTable();
 createExtractsTable();
 
 // post_create
@@ -130,8 +144,7 @@ async function insertJunkRecord(data) {
   await queryDb(`INSERT INTO junk (text) VALUES (?)`, data.text);
 }
 
-async function selectPostsTable(data) {
-  // console.log("SELECTING ON TEXT: ", data.text);
+async function selectPostsTable(data) { 
   // console.log(`DB:selectPostsTable:SELECT`);
   let post = await queryDb("SELECT id FROM posts WHERE text = ?", [data.text]);
   return post;
@@ -283,7 +296,8 @@ async function updatePostMeta(post_id, meta) {
 }
 
 //  { extract }, 'record', Object.fromEntries(Object.entries(record).map(([key, value]) => [key, JSON.stringify(value)])))
-async function createOrUpdateExtract(company_id, post_id, extract) {
+async function createOrUpdateExtract(company_id, post_id, extract, record) {
+  console.log('gpt:createOrUpdateExtract:',{ company_id, post_id, extract, record });
   let existingRecord = await queryDb("SELECT id FROM extracts WHERE post_id = ? AND sitemap_id = ?", [post_id, extract.sitemap_id]);
   if (!existingRecord.length) {
     // console.log("4. extractCreateForPos - Creating extract record for extract id", extract.id);
@@ -340,23 +354,29 @@ async function getCompanyName(post) {
   return companyName;
 }
 
+//
+//
+// Convenience Fn
+//
+//
+
 // get bio text
-async function getDefaultBioAndResume() {
-  // console.log(`DB:GETDEFAULTBIOANDRESUME:SELECTX2`);
-  let defaultBio = (await queryDb("SELECT id, text FROM userinfo WHERE label = 'bio'", []))[0].text;
-  let defaultResume = (await queryDb("SELECT * FROM userinfo WHERE title = 'Default' AND label = 'resume'", []))[0].text;
-  return { defaultBio, defaultResume };
-}
+// async function getDefaultBioAndResume() { 
+//   let defaultBio = (await queryDb("SELECT id, text FROM userinfo WHERE label = 'bio'", []))[0].text;
+//   let defaultResume = (await queryDb("SELECT * FROM userinfo WHERE title = 'Default' AND label = 'resume'", []))[0].text;
+//   return { defaultBio, defaultResume };
+// }
+
 // for each input call chatgpt
-async function getPostText(postId) {
-  if (postId) {
-    // console.log(`DB:GETPOSTTEXT:SELECT`);
-    let post = (await queryDb("SELECT * FROM posts WHERE id = ?", [postId]))[0].text;
-    return post;
-  } else {
-    return false;
-  }
-}
+// async function getPostText(postId) {
+//   if (postId) {
+//     // console.log(`DB:GETPOSTTEXT:SELECT`);
+//     let post = (await queryDb("SELECT * FROM posts WHERE id = ?", [postId]))[0].text;
+//     return post;
+//   } else {
+//     return false;
+//   }
+// }
 
 async function getContent(body) {
   let { companyid, postid, resumeid, coverletterid } = body;

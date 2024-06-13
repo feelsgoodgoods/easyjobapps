@@ -1,7 +1,7 @@
 import { db } from "./dbroutes.js";
-import { pup } from "./puproutes.js";
+// import { pup } from "./puproutes.js";
 
-import { extracts_create_for_post } from "./gptroutes.js";
+import { gpt } from "./gptroutes.js";
 
 import { callChatGPT, splitTextIntoChunks, mergeRecords } from "./gptcall.js";
 
@@ -68,30 +68,33 @@ async function addOrUpdateCompany(companyData) {
     console.groupEnd();  
     return post;
   }  
-  console.log(":db:handlecompany");
+  console.log(":gpt:handlecompany");
   company_id = await db.handleCompany(companyData);
   // console.log("::", { company_id });  
   post = (await db.selectPostsTable(companyData))[0];
-  console.log(":db:~~~~~~~~~~~~~~~~~~~selectPostsTable:#CheckExist", { post });
+  // console.log(":db:~~~~~~~~~~~~~~~~~~~selectPostsTable:#CheckExist", { post });
+  console.log(':gpt:handlePost')
   post_id = post?.id;
   if (!post_id) {
-    console.group(":ADD NEW:");
-    console.log(":db:insertPost:");
+    // console.group(":ADD NEW:");
+    // console.log(":db:insertPost:");
     let links = await db.insertPosts(companyData, company_id);
     if (!links.find(link => link.link === websiteUrl)) {
-      links = (await pup.sitemap(company_id, "sitemap")).links;
+      // links = (await pup.sitemap(company_id, "sitemap")).links;
+      links = []
     }
-    console.log("db:selectPost:", companyData);
+    // console.log("db:selectPost:", companyData);
     post = (await db.selectPostsTable(companyData))[0];
+    // console.log("db:selectPost:", post);
     post_id = post?.id;
-    post_id && console.log(":extracts_create_for_post:");
-    post_id && (await extracts_create_for_post({
+    // post_id && console.log(":extracts_create_for_post:");
+    post_id && (await gpt.extracts_create_for_post({
         company_id,
         post_id
       }));
     console.groupEnd();
   } else {
-    console.log(":TODO:UPDATE:");
+    console.log("gpt:TODO:UPDATE:");
   }
   post.companyName = companyName
   console.groupEnd();  
@@ -191,8 +194,11 @@ let extractFromPost = async record => {
   return merged;
 };
 async function extractCreateForPost(extract, companyName, jobTitle, force, post_id, company_id) {
-  // console.log("extractCreateForPos Extract Type:", extract);
+  console.group(":extractCreateForPost:");
+  console.log(extract);
   if (extract.extract && !force) {
+    console.log(':extractCreateForPost:Premature-END:')
+    console.groupEnd();
     return false;
   }
   if (!extract.text) {
@@ -201,7 +207,7 @@ async function extractCreateForPost(extract, companyName, jobTitle, force, post_
       sitemap_id: extract.id
     });
   }
-  let record;
+  let record = false;
   if (extract.type == "specific") {
     record = await extractFromPost({
       companyName,
@@ -226,9 +232,10 @@ async function extractCreateForPost(extract, companyName, jobTitle, force, post_
       jobTitle,
       ...extract
     });
-    let meta = await getPostMeta(post_id);
+    let meta = await db.getPostMeta(post_id); 
 
     meta = JSON.parse(meta);
+    
     let { instructionsToApplicant, emailApplicationTo, emailApplicationSubjectLine, applicationUrl, supplementalUrls, remoteAvailable } = record;
     let newMeta = {
       instructionsToApplicant,
@@ -256,13 +263,16 @@ async function extractCreateForPost(extract, companyName, jobTitle, force, post_
     // console.log("extractCreateForPos: unknown type", extract);
   }
   if (record) {
-    await createOrUpdateExtract(company_id, post_id, extract);
+    // console.log("extractCreateForPos - record:", record);
+    await db.createOrUpdateExtract(company_id, post_id, extract, record);
   }
   // TODO
   // Client: display at resume section: email, application instructions, application links.
   // Server: add jobBoardLinks to sitemap status=1 if not in sitemap already then crawl em.
   // Server: fetch application links and get extract from there too.
-  return true;
+  console.log("extractCreateForPost:END");
+  console.groupEnd();
+  return record;
 }
 
 //~~~~ Export

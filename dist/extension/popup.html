@@ -1,427 +1,576 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Run Extension</title>
+  <head>
+    <title>Run Extension</title>
+    <style> 
+
+    </style>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <div id="resumetool"> 
+      <div id="toast" class="toast">Success!</div> 
+      <div id="loading">Running Requested Task...</div>
+      <input type="radio" name="tab" id="tabuser">
+      <input type="radio" name="tab" id="tabhelp">
+      <input type="radio" name="tab" id="tabpost">
+      <div id="topnav"> 
+        <label class="tab-label" for="tabhelp" data-title="User Instructions and FAQ">HELP</label> 
+        <label class="tab-label" for="tabuser" data-title="Set Up Your Account">Setup</label> 
+        <span style="cursor:pointer"><label class="tab-label" for="tabpost" data-title="Apply To Jobs">Apply</label></span> 
+        <button popovertarget="login" class="linkbtn">Login</button>
+        <hr style="margin:0px">
+      </div> 
+      <div id="tabhelpcontainer" class="container">
+        <div id='helpabout' style="background:#eee; color:333; padding:10px; border-bottom: 2px solid grays;">
+          <h2>ABOUT</h2>
+          <div>
+        AutoApply is a free Chrome extension that uses AI to autofill job forms with tailor made resumes and cover letters.
+        </div>
+        <!--
+          AutoApply.org is a free Chrome extension that automates job applications.
+          <span style="display:block;padding:.5rem 0px;"> In one click, AI  can auto-fill job forms and tailor your resume and cover letter.
+          </span>  
+        -->
+          <br>
+        </div>
+
+        <h2>Usage</h2>
+        <ol id="spaceol">
+          <li>Upload your resume and bio, and connect ChatGPT</li>
+          <li>Find a job you like and hit 'auto-load' to pull the job description off the page
+            <ul><li>Tailor your resume</li></ul>
+          </li>
+          <li>Click 'auto-apply' to fill it's form</p>
+        </ol>
         <style>
-            #resumetool {
-                overflow: auto;
-                width: 350px;
-                height: 400px;
-                background: white;
-                border: 2px solid #000;
-                div {
-                    details {
-                        summary {text-transform: capitalize; }
-                    }
-                }
-
-                .yellow, details > div > details > summary, .jobPosts > details > summary {
-                    background: #eec;
-                }
-
-                /* yellowish */
-                summary[name='extractsTitle'], .jobPosts > details > details > summary {
-                    background: #cee;
-                }
-
-                /* blueish */
-                summary[name='originalTextTitle'], summary[name='extractedTextTitle'], .red {
-                    background: #ecc;
-                }
-
-                /* redish */
-                input[type="radio"] {
-                    display: none;
-                }
-
-                label.tab-label {
-                    display: inline-block;
-                    padding: 10px 20px;
-                    background-color: #f0f0f0;
-                    border: 1px solid #ccc;
-                    border-bottom: none;
-                    cursor: pointer;
-                }
-
-                .container {
-                    display: none;
-                }
-
-                #settingsuser:checked ~ #settingsusercontainer, 
-                #loadpost:checked ~ #loadpostcontainer, 
-                #settingspost:checked ~ #settingspostcontainer, 
-                #generatecontent:checked ~ #generatecontentcontainer, 
-                #fillformstab:checked ~ #fillformscontainer,
-                #question:checked ~ #questioncontainer {
-                    display: block;
-                }
-
-                label.tab-label: hover {
-                    background-color: #e0e0e0;
-                }
-
-                input[type="radio"]: checked + label.tab-label {
-                    background-color: #fff;
-                    border-bottom: 1px solid #fff;
-                }
+          #spaceol{
+            li{
+              padding-bottom:5px;
+              ul{padding-top:5px;}
             } 
-            #loading {
-                display: none;
-                position: fixed;
-                top: 0px;
-                width: 100vw;
-                background: orange;
-                color: green;
-                font-size: 30;
-            }
-
-            .toast {
-                visibility: hidden;
-                position: fixed;
-                bottom: 20px;
-                left: 20px;
-                background-color: #333;
-                color: #fff;
-                padding: 10px;
-                border-radius: 4px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                z-index: 1000;
-                opacity: 0;
-                transition: opacity 0.5s, visibility 0.5s;
-            }
-
-            .toast.show {
-                visibility: visible;
-                opacity: 1;
-            }
-            #settingsusercontainer{
-                textarea{
-                    width: 90%;
-                    height: 250px;
-                    font-size: smaller;
-                
-                }
-            }
+            li:last-child{padding-bottom:0px;}
+          }
         </style>
-    </head>
-    <body>
-        <div id="resumetool">
-            <div id="toast" class="toast">Success!</div>
-            <div id="loading">Running Requested Task...</div>
-            <input type="radio" name="tab" id="settingsuser">    <label class="tab-label" for="settingsuser">User</label>
-            <input type="radio" name="tab" id="loadpost" checked><label class="tab-label" for="loadpost">Load Post</label>
-            <input type="radio" name="tab" id="settingspost">    <label class="tab-label" for="settingspost" >Edit Post</label>
-            <input type="radio" name="tab" id="generatecontent" ><label class="tab-label" for="generatecontent">Create</label>
-            <input type="radio" name="tab" id="fillformstab" >   <label class="tab-label" for="fillformstab">Fill</label>
-            <input type="radio" name="tab" id="question" >       <label class="tab-label" for="question">Q/A</label>
-            <hr>
-            <div id="settingsusercontainer" class="container">
-                <button style="float:right;">LOGIN</button>
-                <div id="userstats" style="float:left; display:none;">
-                    <span id="credits">#</span>
-                    Credits | <button>Get More</button>
-                    | <button>Review Usage</button>
-                </div>
-                <br>
-                Welcome! <br>
-                <br>
-                Speed up your job search with <b>NO LOGIN REQUIRED</b>
-                !<br>
-                <br>
-                <div id='newuseralerts' style="background:red; color:white; padding:10px;">
-                    <br>
-                    Required Data: `User > Settings > Open AI API Key`.<br>
-                    <br>
-                </div>
-                <br>
-                <b>Free Tier: </b>
-                Upload job posts, create tailored resumes or cover letters, and auto-fill job applications. Data gets stored in the browser. 
-      <br>
-                <br>
-                <b>Subscription:</b>
-                Create PDFs, fetch sitemaps, crawl company websites, create and send tailored emails. Data gets stored in the cloud. 
-      <br>
-                <br>
-                <br>
-                <!-- -->
-                <details id="settingscontainer"><summary>
-                        <h2 style="display:contents">Settings</h2>
-                    </summary>
-                    <button>Download Account </button>
-                    | <button>Upload Account </button>
-                    <br>
-                    <form>
-                        Full Name: <input type="text" id="fullname" name="fullname" placeholder="Your Name">
-                        <br>
-                    </form>
-                    <!-- safely link a new tab-->
-                    <form>
-                        <a href='https://platform.openai.com/api-keys' target="_blank" rel="noopener noreferrer">Open AI</a>
-                        :
-        <input type="text" id="openaikey" name="openaikey" placeholder="API Key">
-                        <br>
-                    </form>
-                </details>
-                <!-- Update Bio -->
-                <details id="biocontainer"><summary>
-                        <h2 style="display:contents">User Bio</h2>
-                    </summary>
-                    <form>
-                        <label for="updatebio">Your Bio:</label>
-                        <br>
-                        <textarea id="bio" name="bio"></textarea>
-                        <br>
-                        <button id="updatebio" type="scrape" name="updatebio">Update Bio</button>
-                    </form>
-                </details>
-            </div>
-            <div id="loadpostcontainer" class="container">
-                <a id='dashlink' style='float:right' href="http://localhost:3001/companys-view#detail-" target="_blank">Dashboard</a>
-                <label>
-                    Company Name:<input type="text" id="companyname" placeholder="">
-                </label>
-                <br>
-                <details id="matches" open>
-                    <summary>matches</summary>
-                </details>
-                <b>Job Post Info:</b>
-                <br>
-                <label>
-                    Job Name:<input type="text" id="jobtitle" disabled>
-                </label>
-                <br>
-                <!-- <label>Company ID:<input type="number" id="companyId" disabled></label> <br> -->
-                <label>
-                    Post ID:<input type="number" id="postid">
-                </label>
-                <!-- <label>Post Excerpt:<input type="text" id="postExcerpt"></label></label> -->
-                <button id="postview">Fetch</button>
-                <br>
-                <br>
-                <hr>
-                <b>Job Post Upload:</b>
-                <br>
-                <textarea id="postupload" placeholder="Enter the post"></textarea>
-                <button id="uploadpost">Upload</button>
-                <br>
-                <br>
-                <hr>
-                <button id="clearall" style="float:right">Clear All</button>
-                <br>
-                <br>
-            </div>
-            <div id="settingspostcontainer" class="container"></div>
-            <div id="generatecontentcontainer" class="container">
-                <b>Search:</b>
-                <a href="" target="_blank">Dashboard</a>
-                <br>
-                <style>
-                    .resumecontent, .coverlettercontent, .emailcontent {
-                        display: none;
-                    }
 
-                    #tab1:checked ~ .resumecontent, #tab2:checked ~ .coverlettercontent, #tab3:checked ~ .emailcontent {
-                        display: block;
-                    }
+        <div id="faq">
+          <h2 style="padding-left:8px;position: sticky; top: 2em; background:white;">FAQ</h2>
+          <details id='qakey' class="expander faq">
+            <summary>What is a ChatGPT Key?</summary>
+            <div>
+              ChatGPT is a language model that can fill out forms. You need a key to use it.
+              <br> 
+              <b>How To Get A Key</b>: 
+              <br>
+              <div>
+                <ol style="margin: 0;">
+                  <li>Create a OpenAI <a href='https://platform.openai.com/' target="_blank" rel="noopener noreferrer">
+                    account</a>
+                  </li>
+                  <li>Configure your <a href='https://platform.openai.com/settings/organization/billing/overview' target="_blank" rel="noopener noreferrer">
+                    billing</a>
+                  </li>
+                  <li>Create your <a href='https://platform.openai.com/api-keys' target="_blank" rel="noopener noreferrer">key</a>
+                  </li>
+                  <li>
+                    Copy it into your <a href=".setuphelpkey">settings</a>
+                  </li>
+                </ol>
+              </div>
+          </details>
+          <details id='qaconnect' class="expander faq">
+            <summary>How do I connect ChatGPT?</summary>
+            <div>
+              AutoApply uses OpenAI's ChatGPT to work. Login to AutoApply and buy credits or connect your ChatGPT account using an API Key.
+            </div> 
+          </details>
+          <details id="qacost" class="expander faq">
+            <summary>How much is this?</summary>
+            <div>AutoApply is free to use but ChatGPT costs a couple pennies per application.
+            </div>
+          </details>
+          <details id='qalogin' class="expander faq">
+            <summary>Why Log In?</summary>
+            <div> 
+              <ul style="margin: 0;">
+                <li>Save your data in the cloud (5$ a month) to access your data from any device.</li>
+                <li>Buy credits (10% fee) and skip connecting a ChatGPT account. </li>
+              </ul> 
+            </div>
+          </details>
+          <br>
+          <br>
+        </div> 
+      </div>
+      <div id="tabusercontainer" class="container">
+        <div style="background:#eee; color:333; padding:10px;">
+          <h1>Welcome to AutoApply! <br>
+          </h1>
+          <p style="font-size:16px; margin:0px 0px 1.5rem 0px; font-weight: bold;">Use AI to fill out job application forms and create tailored resumes and cover letters.
+          </p>
+          <!--
+          <a href=".helpabout">Learn More</a> | <a href=".helpuser">
+            Setup Instructions</a> 
+          <br>
+          <br>
+          -->
+        </div>
+        <h3 id='alertsetup'></h3> 
+        <style>
+          .required::after {
+            content: '*';
+            color: red;
+            font-size: smaller;
+            vertical-align: super;
+          }  
+        </style>
+        <small style="float:right">
+          <span class="required" style="margin: 0 .2rem 0 .5rem;"></span>
+          = required
+        </small>
+        <!-- My Documentss -->
+        <div name="documentscontainer"> 
+          <h2>My Files</h2>
+          <div id="uploadeddocuments">
 
-                    input[name="tab-control"] {
-                        display: inline-block !important;
-                    }
-                </style>
-                <form>
-                    <input type="hidden" name="companyid">
-                    <!-- Update value-->
-                    <input type="hidden" name="postid">
-                    <!-- Update value-->
-                    <a name="applicationurlval" target="_blank"></a>
-                    <br/>
-                    <p name="supplementalurls"></p>
-                    <p name="instructionstoapplicant"></p>         
-                    
-                    <div style="border: 2px solid black; background: rgba(0, 0, 0, 0.1)">
-                        <!-- Tab Controls -->
-                        <input type="radio" id="tab1" name="tab-control" checked>
-                        <label for="tab1">Resume</label>
-                        <input type="radio" id="tab2" name="tab-control">
-                        <label for="tab2">Cover Letter</label>
-                        <input type="radio" id="tab3" name="tab-control">
-                        <label for="tab3">Email</label>
-                        <br/>
-                        <input type="checkbox" name="resubmit">Resubmit for corrections </input>
-                        <br/>
-                        <input type="checkbox" name="gpt4" checked>use GPT4 </input>
-                        <br/>
-                        <hr/>
-                        <!-- Tab Content -->
-                        <div class="resumecontent">
-                            <label for="resumeid">Use Resume:</label>
-                            <select name="resumeid">Dropdown Options</select>
-                            <br/>
-                            <label for="messageresume">User Message:</label>
-                            <select name="resumemessageid">Dropdown Options</select>
-                            <br/>
-                            <textarea name="messageresume" style="height:50px;" placeholder='Enter a resume prompt here'></textarea>
-                            <button type='crawl' name="generateresume">Create Resume</button>
-                            <br/>
-                            <b>Pdf Text:</b>
-                            <br/>
-                            <textarea name="newresume" id="newresume" style="height:50px;" placeholder='Generated Resume Content Here'></textarea><br>
-                            <button name="refreshresume" type="crawl" style="display:none;">Refresh PDF</button>
-                            <button name="downloadresume" type="crawl" style="display:none;">Download Resume</button>
-                            <a href="" name="resumepdflink" target="_blank">View Resume</a>
-                            <br/>
-                            <iframe name="previewresume" style="display:none; width:100%;" src="" width="100%" height="100%"></iframe>
-                        </div>
-                        <div class="coverlettercontent">
-                            <label for="coverletterid">Use Cover Letter:</label>
-                            <select name="coverletterid">Dropdown Options</select>
-                            <br/>
-                            <label for="messagecoverletter">User Message:</label>
-                            <select name="coverlettermessageid">Dropdown Options</select>
-                            <br/>
-                            <textarea name="messagecoverletter" style="height:50px;" placeholder='Enter a cover letter prompt here'></textarea>
-                            <button type="crawl" name="generatecoverletter">Create Cover Letter</button>
-                            <br/>
-                            <b>Pdf Text:</b>
-                            <br/>
-                            <textarea name="newcoverletter" style="height:50px;" placeholder='Generated Cover Letter Content Here'></textarea>
-                            <button name="refreshcoverletter" type="crawl" style="display:none">Refresh</button>
-                            <button name="downloadcoverletter" type="crawl" style="display:none;">Download Cover Letter</button>
-                            <iframe name="previewcoverletter" style="display:none; width:700px;" src="" width="100%" height="100%"></iframe>
-                        </div>
-                        <div class="emailcontent">
-                            <label for="emailapplicationto">Email To:</label>
-                            <input name="emailaapplicationto" placeholder='Enter email to: '/>
-                            <br/>
-                            <label for="emailapplicationsubjectline">Email Subjet Header:</label>
-                            <input name="emailapplicationsubjectline" placeholder='Enter email subject: '/>
-                            <br/>
-                            <label for="emailid">User Email Template:</label>
-                            <select name="emailid">Dropdown Options</select>
-                            <br/>
-                            <label for="messageemail">User Message:</label>
-                            <select name="emailmessageid">Dropdown Options</select>
-                            <br/>
-                            <textarea name="messageemail" style="height:50px;" placeholder='Enter a email prompt here'></textarea>
-                            <br/>
-                            <button type="crawl" name="createemail">Create Email</button>
-                            <br/>
-                            <textarea name="newemail" style="height:50px;" placeholder='Generated Email Content Here'></textarea>
-                            <button type="crawl" name="emailsend">Send Email</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div id="fillformscontainer" class="container">
-                <b>Fill Form:</b>
-                <br>
-                A message to the AI<br>
-                <input type="textbox" id="fillformsmessage" placeholder="Enter your message">
-                <br>
-                <br>
-                <!-- The Raw HTML or container id of your form <br> (optional, if the auto-fill doesn't work)<br> -->
-                <!-- <input type="textbox" id="fillFormsOptions" placeholder="Enter form content (if auto-fill and selector not working)"> <br> -->
-                <!-- <input type="textbox" id="fillFormSelector" placeholder="Enter container querySelector"> <br>  -->
-                <button id="fillforms">Auto-Fill Form</button>
-                <br>
-                <br>
-                <details>
-                    <summary>
-                        <b>If the auto-fill doesn't work:</b>
-                    </summary>
-                    <b>1.</b>
-                    Hit 'ctrl'+'shift'+'c' to enter 'inspect mode' and also open the browser console.  <br>
-                    <b>2.</b>
-                    While in the 'Inspect' mode, click on the form you want to auto-fill. <br>
-                    <b>3.</b>
-                    Then go into the console's text box and hit 'ctrl'+'c' then 'enter' to re-run the auto-fill script.
-    
-                
-                </details>
-                <br>
-                <button id="selectform">Select And Fill Form</button>
-            </div>
-            <div id="questioncontainer" class="container">
-                <b>Question:</b>
-                <br>
-                <textarea id="questioninput" placeholder="Enter your question"></textarea>
-                <br>
-                <button id="askquestion">Ask</button>
-                <br>
-                <br>
-                <b>Answer:</b>
-                <br>
-                <textarea id="questionoutput"></textarea>
+            <small data-title="Upload your work history to continue.">
+              &#9432;
+            </small> 
+            <span class="required">  
+            <button id="openNewResume" popovertarget="documenteditor" class="linkbtn" style="padding:0px">
+              Upload Resume</button>   </span>        
+            </span>          
+            <br>
+          </div>
+        </div>
+        <!-- Settings -->
+        <div name="settingscontainer"> 
+          <h2>Settings</h2>
+          <form style="padding-left:8px;"> 
+            <div style="display:flex; align-items:end">
+              <div style="width: fit-content;  width: -webkit-fill-available;">
+                <small data-title="This information is used to fill out your job applications.">
+                  &#9432;
+                </small>
+                <labelfor="updatebio"> 
+                  <span id="setuphelpbio"  class="required">
+                    Personal Information:
+                  </span>
+                </label> 
+              </div> 
+              <button type='button' popovertarget="setupBioExample" class="linkbtn">
+                Example</button>
+            </div> 
+            <textarea id="bio" name="bio" placeholder=""></textarea>
+            <br>
+            <br>
+            <div id="setuphelpkey" style="width:fit-content;">
+              <small><a class="linkbtn" href=".qakey"
+                data-title="Login to skip this. Click for Help.">
+                &#9432;
+              </a></small>
+              <label>ChatGPT API Key: </label>
+              <br>
+              <input type="text" id="openaikey" name="openaikey" placeholder="" >
             </div>
             <br>
+            <br>
+            <button id="updatebio" type="scrape" name="updatebio">
+              Save Settings</button>
+            <br>
+          </form>
         </div>
-    </body>
+        <!--
+        <hr>
+        <style>
+        #usertabapplybtn {
+            background-color: green;
+            color: white;
+            font-size: 4rem;
+            align-items: center;
+            margin:auto;
+            padding:15px 35px;
+            display:flex;
+        }
+        #usertabapplybtn:disabled {
+            background-color: gray;
+            cursor: not-allowed;
+            
+        } 
+        </style>
+        <button id='usertabapplybtn'>APPLY</button>
+        -->
+        <br>
+        <br>
+      </div>
+      <style>
+        #autoload, #autoapply{
+          background-color: green;
+          color: white;
+          font-size: 1rem;
+          align-items: center;
+          margin:auto;
+          padding:15px 35px;
+          display:flex;
+          cursor: pointer;
+        }
+      </style>
+      <div id="tabpostcontainer" class="container">
+        <h2>Auto</h2> 
+        <div style="display:flex;width:100%;justify-content: space-around;">
+          <div>
+            <button id="autoload">Load Job</button>
+            <button class="linkbtn"  type="button" popovertarget="loadpostcontainer" ><small>Manually Load</small></button>
+          </div>
+          <div>
+          <button id="autoapply">Apply</button>
+          </div>  
+        </div>
+        <h2>Review</h2>
+        <input type="radio" name="posttab" id="reviewpost">
+        <label class="tab-label" for="reviewpost">Job</label>
+        <input type="radio" name="posttab" id="reviewresume">
+        <label class="tab-label" for="reviewresume">Resume</label>
+        <input type="radio" name="posttab" id="reviewcoverletter">
+        <label class="tab-label" for="reviewcoverletter">Cover Letter</label>
+        <!--<input type="radio" name="posttab" id="settingsapply">
+        <label class="tab-label" for="settingsapply">Apply</label> -->
+        <hr>
+        <div id="loadpostcontainer" popover>
+          <h2>Load Post
+            <button type="button" popovertarget="loadpostcontainer" popovertargetaction="hide" style="float:right">X</button>
+          </h2>
+          <div style="margin:15px; background:#eee"> 
+            <small>
+              <b>Either:</b>
+              <code>'Search'</code> past uploads by company name or 
+              <code>'Upload'</code> a job description.
+            </small>
+          </div>
+          <!-- Company Name -->
+          <label style="display:block;margin-bottom:.5rem;">
+            Company Name:
+          </label>
+          <div style="margin-bottom:1rem;">
+            <input placeholder="Search" id="companyname" style=''> 
+            <details id="matches" style='display:none; margin-bottom:.5rem;' open>
+              <summary>matches</summary>
+            </details>
+          </div>
+          <!-- Job Post -->
+          <label  style="display:block;margin-bottom:.5rem;">
+            Job Post: 
+            <button id="uploadpost">Upload</button>
+          </label>
+          <textarea id="postupload" style='height:100px;' placeholder="Enter the post"></textarea>
+          <br>
+          <br>
+        </div>
+        <div id="reviewpostcontainer" class="container">
+          test
+        </div>
+        <div id="reviewcontainer" class="container"> 
+          <form>
+            <input type="hidden" name="companyid">
+            <input type="hidden" name="postid">
+            <a name="applicationurlval" target="_blank"></a>
+            <p name="supplementalurls"></p>
+            <p name="instructionstoapplicant"></p>
+            <div style="display: flex; justify-content:center; margin-bottom:.5rem">
+              <div class="templateimg">
+                <br>
+                <img src="./template_resume_compressed_full.png" width="300px" alt="Expanded">
+                <span>
+                  View In Tab
+                  <!-- <iframe name="previewresume" style="display:none; width:100%;" src="" width="100%" height="100%"></iframe> -->
+                  <a href="./template_resume_compressed_full.png" name='resumepdflink' target="_blank" rel="noopener noreferrer">
+                    <svg fill="#000000" width="14px" height="14px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V4a1,1,0,0,0-1-1H4A1,1,0,0,0,3,4ZM5,5H19V19H10V15a1,1,0,0,0-1-1H5Zm6.293,7.707a1,1,0,0,1,0-1.414L14.086,8.5H13a1,1,0,0,1,0-2h3.5a1.01,1.01,0,0,1,.382.077A1,1,0,0,1,17.5,7.5V11a1,1,0,0,1-2,0V9.914l-2.793,2.793A1,1,0,0,1,11.293,12.707Z"></path>
+                    </svg>
+                  </a>
+                </span>
+              </div>
+            </div>
+            <div style="border: 2px solid black; background: rgba(0, 0, 0, 0.1); padding-top:.5rem"> 
+              <input type="checkbox" name="resubmit">Resubmit for corrections </input> 
+              <hr />
+              <!-- Tab Content -->
+              <div class="resumecontent">
+                <div class="resumeTemplate"> 
+                <label for="messageresume">Message to the AI:</label> 
+                <br />
+                <textarea name="messageresume" style="height:50px;" placeholder='Enter a resume prompt here'></textarea>
+                <button type='crawl' name="generateresume">Create Resume</button>
+                <br />
+                <b>Pdf Text:</b>
+                <br />
+                <textarea name="newresume" id="newresume" style="height:50px;" placeholder='Generated Resume Content Here'></textarea>
+                <br>
+                <button name="refreshresume" type="crawl" style="display:none;">Refresh PDF</button>
+                <button name="downloadresume" type="crawl" style="display:none;">Download Resume</button>
+              </div>
+              <div class="coverlettercontent">
+                <label for="coverletterid">Use Cover Letter:</label>
+                <select name="coverletterid">Dropdown Options</select>
+                <br />
+                <label for="messagecoverletter">User Message:</label>
+                <select name="coverlettermessageid">Dropdown Options</select>
+                <br />
+                <textarea name="messagecoverletter" style="height:50px;" placeholder='Enter a cover letter prompt here'></textarea>
+                <button type="crawl" name="generatecoverletter">Create Cover Letter</button>
+                <br />
+                <b>Pdf Text:</b>
+                <br />
+                <textarea name="newcoverletter" style="height:50px;" placeholder='Generated Cover Letter Content Here'></textarea>
+                <button name="refreshcoverletter" type="crawl" style="display:none">Refresh</button>
+                <button name="downloadcoverletter" type="crawl" style="display:none;">Download Cover Letter</button>
+                <iframe name="previewcoverletter" style="display:none; width:700px;" src="" width="100%" height="100%"></iframe>
+              </div>
+            </div>
+          </form>
+        </div>
+        <!--
+        <div id="settingsapplycontainer" class="container">
+          <h2>Fill Form</h2>
+          <div id="fillformscontainer"> A message to the AI <br>
+            <input type="textbox" id="fillformsmessage" placeholder="Enter your message">
+            <br>
+            <br>
+            <!-- The Raw HTML or container id of your form <br> (optional, if the auto-fill doesn't work)<br> ->
+            <!-- <input type="textbox" id="fillFormsOptions" placeholder="Enter form content (if auto-fill and selector not working)"><br> ->
+            <!-- <input type="textbox" id="fillFormSelector" placeholder="Enter container querySelector"><br>  ->
+            <button id="fillforms">Auto-Fill Form</button>
+            <br>
+            <br>
+            <details>
+              <summary>
+                <b>If the auto-fill doesn't work:</b>
+              </summary>
+              <b>1.</b> Hit 'ctrl'+'shift'+'c' to enter 'inspect mode' and also open the browser console. <br>
+              <b>2.</b> While in the 'Inspect' mode, click on the form you want to auto-fill. <br>
+              <b>3.</b> Then go into the console's text box and hit 'ctrl'+'c' then 'enter' to re-run the auto-fill script.
+            </details>
+            <br>
+            <button id="selectform">Select And Fill Form</button>
+          </div>
+          <hr>
+          <h2>Ask ChatGPT</h2>
+          <div id="questioncontainer">
+            <b>Question:</b>
+            <br>
+            <textarea id="questioninput" style="height: 50px;" placeholder="Enter your question"></textarea>
+            <br>
+            <button id="askquestion">Ask</button>
+            <br>
+            <br>
+            <b>Answer:</b>
+            <br>
+            <textarea id="questionoutput" style='height:100px;'></textarea>
+          </div>
+        </div>
+        -->
+      </div>
+    </div>
+  </body>
+
+
+  <div id="login" popover>
+    <button type="button" popovertarget="login" popovertargetaction="hide" style="float:right">X</button>
+    <br>
+    <br>
+    <br>
+    <br>
+    Login content
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+  </div> 
+  <div id='setupBioExample' popover> 
+    <h2>
+      Bio Example:
+      <button type="button" popovertarget="setupBioExample" popovertargetaction="hide" style="float:right">X</button>
+    </h2> 
+    <small style="
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      background-color: #eee; 
+      padding: 0 .2rem 0 .3rem;
+    ">  <br>
+      Hi ChatGPT! My name is Betty. <br>
+      I use a lot of emojis and exclamation points! <br>
+      Please do that too!<br><br>
+      Age: 45 <br>
+      Location: New York <br>
+      Pronouns: She/Her <br>
+      Hispanic: Yes <br>
+      Race: Prefer not to answer <br>
+      Disability: None <br>
+      Veteran: Spouse <br>
+      Criminal History: Do not answer <br>
+      Hobbies: Skating, Reading, and Writing 
+      <br><br> 
+    </small>
+    <p style="max-width: 400px;  background: lightyellow; margin-bottom:.5rem">
+      &#x1F4A1; Tell the AI anything not already in your resume that it may need know in order to fill out a job form.
+    </p>
+  </div>
+
+  <div id="documenteditor" popover>
+    <!-- Header -->
+    <h2>
+      <span id="editorHeader">New Upload</span>
+      <button id="closedocumenteditor" type="button" popovertarget="documenteditor" popovertargetaction="hide" style="float:right">X</button>
+    </h2>
+    <!-- Form -->
+    <form style="display: flex; flex-direction:column;">
+      
+      <!-- File Type --> 
+      <label for="uploadType" style="display:none;">File Type:</label>
+      <select id="uploadType" name="type" style="display:none;">
+        <option value="coverletter">Cover Letter</option>
+        <option value="resume" selected>Resume</option>
+      </select>
+
+      <!-- Step Counter -->
+      <small>
+        Part <span id='setuphelpstep' style="display:contents">1</span> of 4
+      </small>
+      <!-- TEXT OR FILE UPLOAD -->
+      <div id="setuphelpupload" style="margin-bottom: 1rem;">
+        <div style="margin-bottom: .8rem; display:inline-flex;">
+          <label for="uploadMethod">Upload Method:</label> 
+          &nbsp; 
+          <select id="uploadMethod" name="uploadtype">
+            <option value="file">Select File</option>
+            <option value="paste">Paste Text</option> 
+          </select>
+          &nbsp; 
+          <small class='reverse' data-title="Upload a .PDF or enter text">
+            &#9432;
+          </small>
+        </div>
+        
+        <div id="uploadtypecontainer">
+          <textarea id='uploadtext' name="text" style="height:3rem;" 
+          placeholder="Paste text here."></textarea>
+        </div>
+        
+        <div id="uploadinfocontainer">
+          <label for="yesupload">
+            <input type="file" id='yesupload' accept=".pdf" style="display:none;">
+            <div class="drag-drop-box">Drag & drop file here</div>
+          </label>
+        </div> 
+      </div>
+  
+      <!-- TAILOR --> 
+      <div id="setuphelptailor" style="margin-bottom: 1rem;">
+        <div style="margin-bottom: 0rem; display:block">
+          <span style="padding-bottom:1rem">Tailor for each job?</span>
+          <select id="tailor-bool" name="tailor">
+            <option value="0" selected>No</option>
+            <option value="1">Yes</option>
+          </select>
+          <small class='reverse top' 
+            data-title="AI will adjust this file whenever you upload a job description which you can edit later.">
+            &#9432;
+          </small>
+          <!-- Regen message -->
+          <div id="regenmessage">
+            <label for="regenmessage" style="display:block;margin-top: .8rem; ">Message to AI:</label>
+            <textarea id="prompt-text" name="text" style="margin-top: .5rem; height:3rem;" 
+              placeholder="Please, only update my work history."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEMPLATE -->
+      <div id="setuphelpTemplate" style="margin-bottom: 1rem;"> 
+        <span>Select a Template</span>  
+        <select id="template-bool" name="template">
+          <option value="none" selected="selected" >None</option>
+          <option value="Expanded">Expanded</option>
+          <option value="Compressed">Compressed</option> 
+          <option value="Advanced">Advanced</option> 
+        </select>
+        <small class='reverse top'
+          data-title="Reformat your file using a clean template. Required for tailoring and for pasted text.">
+          &#9432;
+        </small>
+        <div class="templateimg">
+          <br>
+          <img src="./template_resume_compressed_full.png" alt="Expanded">
+          <span>
+            Expanded
+            <a href="./template_resume_compressed_full.png" target="_blank" rel="noopener noreferrer">
+              <svg fill="#000000" width="14px" height="14px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V4a1,1,0,0,0-1-1H4A1,1,0,0,0,3,4ZM5,5H19V19H10V15a1,1,0,0,0-1-1H5Zm6.293,7.707a1,1,0,0,1,0-1.414L14.086,8.5H13a1,1,0,0,1,0-2h3.5a1.01,1.01,0,0,1,.382.077A1,1,0,0,1,17.5,7.5V11a1,1,0,0,1-2,0V9.914l-2.793,2.793A1,1,0,0,1,11.293,12.707Z"></path>
+              </svg>
+            </a>
+          </span>
+        </div>
+
+        <div class="templateimg">
+          <br>
+          <img src="./template_resume_expanded_full.png" alt="Compressed">
+          <span>
+            Compressed
+            <a href="./template_resume_expanded_full.png" target="_blank" rel="noopener noreferrer">
+              <svg fill="#000000" width="14px" height="14px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V4a1,1,0,0,0-1-1H4A1,1,0,0,0,3,4ZM5,5H19V19H10V15a1,1,0,0,0-1-1H5Zm6.293,7.707a1,1,0,0,1,0-1.414L14.086,8.5H13a1,1,0,0,1,0-2h3.5a1.01,1.01,0,0,1,.382.077A1,1,0,0,1,17.5,7.5V11a1,1,0,0,1-2,0V9.914l-2.793,2.793A1,1,0,0,1,11.293,12.707Z"></path>
+              </svg>
+            </a>
+          </span>
+        </div>
+
+        <div id="latex-textbox" style="margin-top: 1rem;">
+          <textarea id="latex-text" name="latex" placeholder="Paste LaTeX template here." style="height:2rem;margin-top: 1rem;"></textarea>
+        </div>
+      </div>
+
+      <!-- SUBMIT -->
+      <div id="setuphelpSubmit" style="margin: 1rem 0rem;">
+        <button type="scrape" style="width: 100%;padding: .5rem;">Finish and Upload</button>
+      </div>
+
+      <div style="display:flex;justify-content: space-between;">
+        <button id="back">Back</button>
+        <span> </span>
+        <button id="next">Next</button> 
+      </div>
+
+    </form>
+  </div>
+   
+
+
+
+
+
 </html>
-<!-- Resources Template -->
-<template id="userinfotemplate">
-    <details id="userinfo{{{replace}}}">
-        <summary>
-            <h2 style="display:contents">{{{replace}}}</h2>
-        </summary>
-        <p>
-            Copy and paste your document here. The LLM will use it as a template in the redraft<br/>
-        </p>
-        <!-- Upload templates -->
-        <details>
-            <summary class="yellow">Upload {{{replace}}}</summary>
-            <form>
-                <input type="hidden" name="label" value="{{{replace}}}templates">
-                <label>Name: </label>
-                <input type="text" name="title" placeholder="Template Name...">
-                <br>
-                <textarea name="text" placeholder="Enter {{{replace}}} here:"></textarea>
-                <button type="scrape">Upload Template</button>
-            </form>
-        </details>
-        <details>
-            <summary class='yellow' name='templates'>Uploaded {{{replace}}}s</summary>
-            <div id="{{{replace}}}templateuploads"></div>
-        </details>
-        <p>
-            Add specific processing instructions for the LLM here.<br/>
-        </p>
-        <!-- Upload messages -->
-        <details>
-            <summary class="yellow">Messages To the Bot</summary>
-            <form>
-                <input type="hidden" name="label" value="{{{replace}}}messages">
-                <label>Name: </label>
-                <input type="text" name="title" placeholder="Message Name...">
-                <br>
-                <textarea name="text" placeholder="Enter {{{replace}}} here:"></textarea>
-                <button type="scrape">Upload Message</button>
-            </form>
-        </details>
-        <details>
-            <summary class='yellow' name='messages'>Uploaded Messages</summary>
-            <div id="{{{replace}}}messageuploads"></div>
-        </details>
-    </details>
-</template>
+
 <!-- Display and Update Resume Template -->
 <template id="userinfoupdatetemplate">
-    <details>
-        <summary class="red">Dynamically Overwritten </summary>
-        <form>
-            <div style='display:flex; justify-content: flex-end;'>
-                <button style='background:red;color:white' name='remove'>Delete</button>
-            </div>
-            <input type="hidden" name="userinfoid">
-            <input type="hidden" name="title">
-            <input type="hidden" name="label">
-            <input type="hidden" name="messageortemplate">
-            <textarea name="text">Content Here</textarea>
-            <div style='display:flex; justify-content: flex-end;justify-content: space-around;'>
-                <button style='background:blue;color:white' name='update'>Update</button>
-                <div></div>
-            </div>
-        </form>
-    </details>
+  <details>
+    <summary class="red">Dynamically Overwritten </summary>
+    <form>
+      <div style='display:flex; justify-content: flex-end;'>
+        <button style='background:red;color:white' name='remove'>Delete</button>
+      </div>
+      <input type="hidden" name="userinfoid">
+      <input type="hidden" name="title">
+      <input type="hidden" name="label">
+      <input type="hidden" name="messageortemplate">
+      <textarea name="text">Content Here</textarea>
+      <div style='display:flex; justify-content: flex-end;justify-content: space-around;'>
+        <button style='background:blue;color:white' name='update'>Update</button>
+        <div></div>
+      </div>
+    </form>
+  </details>
 </template>
-<!--bookmarkdeletefromhere--> 
+<!--bookmarkdeletefromhere-->
 <script src="popup.js" type="module"></script>

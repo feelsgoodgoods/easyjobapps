@@ -4,7 +4,7 @@ import { SQLDatabase } from "./table.js";
 
 const db = new SQLDatabase();
 
-function queryDb(sql, params = []) {
+function queryDb(sql, params = []) { 
   return db.parseQuery(sql, params);
 }
 
