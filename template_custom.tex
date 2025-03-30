@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\hypersetup{
+    colorlinks=true,   
+    urlcolor=blue
+} 
+
+\pagenumbering{gobble}
+
+\usepackage{fancyhdr} 
+
+\pagestyle{fancy} 
+\renewcommand{\headrulewidth}{0pt} % Header line
+\renewcommand{\headrule}{\hbox to\headwidth{\color{red}\leaders\hrule height \headrulewidth\hfill}} % Customize header line color
+\setlength{\headheight}{0pt} 
+
+\begin{document}
+
+\begin{center}
+\textbf{\LARGE $name$} \\
+\vspace*{\baselineskip}
+\begin{tabular}{c@{\hskip 0.5in}c@{\hskip 0.5in}c@{\hskip 0.5in}c}
+$if(email)$\href{mailto:$email$}{$email$}$endif$ & $location$ & $phone$ & \href{$website$}{$website$} \\
+\end{tabular}
+\end{center} 
+
+\noindent\textbf{Summary of Experience} \\\\
+$summary$
+\vspace*{\baselineskip}
+
+\noindent\textbf{Work History} \\
+$for(jobs)$
+\textbf{$jobs.jobtitle$} \hfill $jobs.startdate$ - $jobs.enddate$ \\
+$jobs.company$
+
+$if(jobs.items)$
+\begin{itemize}[noitemsep]
+    $for(jobs.items)$
+    \item $jobs.items$
+    $endfor$
+\end{itemize}
+$endif$
+
+\vspace{0.5em}
+$endfor$
+
+\noindent\textbf{Education} \\\\
+$for(education)$
+\textbf{$education.degree$} \hfill $education.institution$ \\
+$endfor$
+\vspace{0.5em}
+
+\noindent\textbf{Awards} \\\\
+$for(awards)$
+\textbf{$awards$} \\
+$endfor$
+\vspace{0.5em}
+
+\noindent\textbf{Tools} \\\\
+$if(tools)$
+  $for(tools)$$tools$$sep$, $endfor$
+$else$
+  $tools$
+$endif$
+\vspace{0.5em}
+
+
+
+\end{document}

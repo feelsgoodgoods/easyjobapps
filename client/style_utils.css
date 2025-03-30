@@ -1,0 +1,217 @@
+/*
+Toast 
+*/
+
+
+/* min(90%, 500px) */
+
+
+
+
+.toast {
+	visibility: hidden;
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	background-color: #333;
+	color: #fff;
+	padding: 10px;
+	border-radius: 4px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	z-index: 1000;
+	opacity: 0;
+	transition: opacity 0.5s, visibility 0.5s;
+}
+
+.toast.show {
+	visibility: visible;
+	opacity: 1;
+}
+
+
+
+
+
+/*
+Loading Spinner
+*/
+
+#loading {
+	display: none;
+	position: sticky;
+	top: 0px;
+	left: 0px;
+	/* width: 100vw; */
+	background: orange;
+	color: green;
+	z-index: 1002;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+.spinner {
+	border: 8px solid #f3f3f3; /* Light grey */
+	border-top: 8px solid #db3434; 
+	border-radius: 50%;
+	width: 6px;
+	height: 6px;
+	animation: spin 2s linear infinite;
+	display: inline-block;
+}
+
+
+
+
+
+/* 
+Tooltip Styles 
+*/
+[data-title] {
+	position: relative;
+}
+[data-title]:after {
+	content: attr(data-title);
+	background-color: yellow;
+	border: 1px solid #111;
+	font-size: .8rem; 
+	position: absolute;
+	top: 100%; /* Position below the element */
+	left: 30%;  
+	z-index: 99999;
+	display: none;  
+	padding: .4em .8em;
+	min-width: 150px;
+	max-width: 300px;
+	white-space: normal; /* Allow text to wrap */
+	word-wrap: break-word; 
+}
+a[href=".helpsetuptailor"][data-title]:after {
+	/* display above not below */
+	top: -100%;
+}
+.top[data-title]:after { 
+	top: -100%; 
+}
+.reverse[data-title]:after {
+	/* display left not right */
+	left: -150px; 
+}
+[data-title]:not(:hover):after {
+	display: none;
+}
+[data-title]:hover:after {
+	display: block; /* Use block instead of flex */
+	animation: datatitle 0.2s ease-in-out forwards;
+}
+@keyframes datatitle {
+	0% { opacity: 0; }
+	100% { opacity: 1; }
+}
+
+
+
+
+
+
+
+.templateimg, #latex-textbox{ 
+	transition: visibility 0s linear 0.2s, opacity 0.2s linear, max-height 0.2s linear, max-width 0.2s linear;
+}
+.templateimg {
+	display: block;
+	vertical-align: bottom;
+	text-align: center;
+	width: 300px;
+	position: relative;
+	border: 1px solid rgb(31, 177, 202);
+	img {
+	display: block;
+	width: 100%;
+	cursor: pointer;
+	object-fit: cover;
+	object-position: top;
+	overflow: hidden;
+	}
+	span {
+	display: block;
+	margin-top: -25px;
+	font-size: 14px;
+	color: white;
+	background-color: rgba(31, 177, 202, 0.7);
+	padding: 5px;
+	position: absolute;
+	bottom: 0;
+	width: 60%;
+	}
+	justify-content: center;
+}
+
+
+ 
+
+/*
+
+gdpr banner shite links to privacy policy and cookie policy
+
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #333;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    z-index: 1000;
+
+*/ 
+
+#gdpr {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgb(238, 238, 238);
+    color: black;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    p {
+        margin: 0;
+        padding: 0;
+    }
+    div {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        gap: 16px; /* Creates 16px space between links and button */
+    }
+    a {
+        color: #4d90fe;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
+    button {
+        background-color: #ff4d4d;
+        color: white;
+        padding: 4px 12px;
+        border: none;
+        border-radius: 5px;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #e60000;
+    }
+} 

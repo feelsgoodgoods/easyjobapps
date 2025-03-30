@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Easy Job Apps",
+  "version": "1.0",
+  "permissions": [
+      "sidePanel",
+      "activeTab",
+      "scripting",
+      "clipboardWrite",
+      "tabs",
+      "storage",
+      "contextMenus"
+  ],
+  "side_panel": {
+      "default_path": "dist/index.html" 
+  },
+  "action": {
+      "default_title": "EasyJobApps"
+  },
+  "icons": {
+      "16": "rsc/icon16.png",
+      "48": "rsc/icon48.png",
+      "128": "rsc/icon128.png"
+  },
+  "content_scripts": [
+      {
+          "matches": ["<all_urls>"],
+          "js": [ 
+            "client/components/content/content_molmo.js",
+            "shared/gpt_all_shared.js",
+            "client/components/content/content_getForms.js",
+            "client/components/content/content_fillForms.js",
+            "client/components/content.js",    
+            "client/components/content/content_linkedin_utils.js",
+            "client/components/content/content_linkedin.js",
+            "rsc/html2canvas.min.js"
+        ], 
+          "run_at": "document_idle"
+      }
+  ],
+  "background": { 
+      "service_worker": "client/components/service-worker.js"
+  }, 
+  "host_permissions": [
+    "http://localhost:3002/*",
+    "https://easyjobapps.com/*",
+    "http://127.0.0.1:4422/pandoc",
+    "https://getfrom.net/pandoc",
+    "https://api.openai.com/v1/chat/completions"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; worker-src 'self'"
+  }
+}

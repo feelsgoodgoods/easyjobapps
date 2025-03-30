@@ -1,0 +1,65 @@
+
+/* 
+Popovers
+*/
+/* [popover] {
+	max-width: 95%;
+	max-height: 76% !important;
+	padding: 0em .8em 1em .8em;
+	color: CanvasText;
+	background-color: Canvas;
+}
+
+::backdrop{ 
+	backdrop-filter: blur(3px) brightness(0.6);
+   
+} 
+html:has(:popover-open){ 
+	body{ 
+	  overflow:hidden; 
+	}
+	overflow: hidden;
+} */
+
+
+
+
+
+
+
+
+
+
+
+.popupWrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+} 
+
+.popupClose {  
+    float: right; 
+    background: gray; 
+    color: white;
+    cursor: pointer;  
+}
+.popupClose:hover {
+    background: darkgray;
+}
+.popupContainer{
+    position: relative;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 20px;
+    z-index: 1000;
+    max-width: min(90%, 800px);
+    max-height: 76%;
+    overflow-y: auto;
+}

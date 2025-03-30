@@ -1,0 +1,93 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\hypersetup{
+    colorlinks=true,   
+    urlcolor=blue
+} 
+
+\pagenumbering{gobble}
+
+\usepackage{fancyhdr} 
+
+\pagestyle{fancy} 
+\renewcommand{\headrulewidth}{0pt} % Header line
+\renewcommand{\headrule}{\hbox to\headwidth{\color{red}\leaders\hrule height \headrulewidth\hfill}} % Customize header line color
+\setlength{\headheight}{0pt} 
+
+\begin{document}
+
+\begin{center}
+  \textbf{\LARGE $name$} \\
+  \vspace*{\baselineskip}
+  \begin{tabular}{c@{\hskip 0.5in}c@{\hskip 0.5in}c@{\hskip 0.5in}c}
+    $if(email)$\href{mailto:$email$}{$email$}$endif$ & 
+    $if(location)$
+      $location$ &
+    $endif$ 
+    $if(phone)$
+      $phone$ & 
+    $endif$  
+    $if(website)$
+      \href{$website$}{$website$} \\ 
+    $endif$
+  \end{tabular}
+\end{center} 
+
+$if(summary)$
+  \noindent\textbf{Summary of Experience} \\\\
+  $summary$
+  \vspace*{\baselineskip}
+$endif$
+
+$if(jobs)$
+  \noindent\textbf{Work History} \\
+  $for(jobs)$
+    \textbf{$jobs.jobtitle$} \hfill $jobs.startdate$ - $jobs.enddate$ \\
+    $jobs.company$
+
+    $if(jobs.items)$
+      \begin{itemize}[noitemsep]
+          $for(jobs.items)$
+            \item $jobs.items$
+          $endfor$
+      \end{itemize}
+    $endif$
+
+    \vspace{0.5em}
+  $endfor$
+$endif$
+
+
+$if(education)$
+  \noindent\textbf{Education} \\\\
+    $for(education)$
+      \textbf{$education.degree$} \hfill $education.institution$ \\
+    $endfor$
+  \vspace{0.5em}
+$endif$
+
+$if(awards)$
+  \noindent\textbf{Awards} \\\\
+  $for(awards)$
+    \textbf{$awards$} \\
+  $endfor$
+  \vspace{0.5em}
+$endif$
+
+
+$if(tools)$
+  \noindent\textbf{Tools} \\\\ 
+  $for(tools)$
+    $tools$$sep$, 
+  $endfor$ 
+  \vspace{0.5em}
+$endif$
+
+
+
+\end{document}

@@ -1,0 +1,160 @@
+@import url('style_reset.css');
+@import url('style_utils.css');
+@import url('style_login.css');
+@import url('style_popup.css');
+
+span[name="title"]{
+	padding-left:8px;
+}  
+
+[name="update"]{
+	background: gray;
+	color: white;  
+}
+[name="update"]:hover{
+	background: darkgray;
+	color: white;  
+	cursor: pointer;
+}
+
+
+#alertsetup {
+	margin: 0px;
+	background: red;
+	color: white;
+	padding: 8px 8px 8px;
+	display: none;
+}
+
+
+
+#loadAndApplyContainer { 
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+}
+
+/*
+#resumetool
+- #toast
+- #loading
+- - .spinner
+- #topnav 
+- - #logoStyle
+- - .navBtnStyle
+- popover-welcome
+*/
+
+#resumetool { 
+	background: white;
+	box-sizing: border-box;
+	height: auto;
+	max-width: 800px;
+	margin: auto;
+	border: 2px solid rgb(238, 238, 238);
+
+	#tabhelpcontainer {
+		ol, ul{
+			padding-inline-start: 1.5rem;
+		}
+		summary{
+			padding-left: 8px;
+		} 
+	}
+
+	div {
+		details {
+			summary {
+				text-transform: capitalize;
+			}
+		}
+	}
+
+	.yellow,
+	details>div>details>summary,
+	.jobPosts>details>summary {
+		background: #eec;
+	}
+
+	/* yellowish */
+	summary[name='extractsTitle'],
+	.jobPosts>details>details>summary {
+		background: #cee;
+	}
+
+	/* blueish */
+	summary[name='originalTextTitle'],
+	summary[name='extractedTextTitle'],
+	.red {
+		background: #ecc;
+	}
+
+	/* redish */
+	input[type="radio"] {
+		display: none;
+	}
+
+	label.tab-label {
+		display: inline-block;
+		padding: 10px 20px;
+		background-color: #f0f0f0;
+		border: 1px solid #ccc;
+		border-bottom: none;
+		cursor: pointer;
+	}
+	label.tab-label:hover {
+		background-color: #e0e0e0;
+	}
+
+	#topnav {
+		
+		div > label.tab-label.active {
+			background-color: #e0e0e0;
+			border-bottom: 1px solid #ccc;
+		} 
+
+		/* position: -webkit-sticky;  */
+		/* position: sticky; */
+		display: flex;
+		top: 0px;  
+		background:white;
+		z-index: 1000;
+		justify-content: space-between;
+	} 
+
+	#reviewresume:checked~#reviewcontainer > form>div>.resumecontent,
+	#reviewresume:checked~#reviewcontainer .resumecontent,
+	#reviewcoverletter:checked~#reviewcontainer .coverlettercontent
+	input[name="tab-control"] {
+	  display: inline-block !important;
+	}
+  
+	.resumecontent,
+	.coverlettercontent  {
+	  display: none;
+	} 
+}
+
+
+ 
+ 
+
+/*
+APPLY TAB
+*/
+#autoload, #easyjobapps, .loginregister {
+    background-color: #28a745; /* Green color */
+    color: white;              /* White text */
+    font-size: 20px;           /* Larger font size */
+    padding: 15px 30px;        /* Spacious padding */
+    border: none;              /* Remove borders */
+    border-radius: 8px;        /* Rounded corners */
+    cursor: pointer;           /* Pointer cursor on hover */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: background-color 0.3s ease;
+}
+#autoload:hover, #easyjobapps:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+ 

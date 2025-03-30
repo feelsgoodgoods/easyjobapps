@@ -1,0 +1,513 @@
+
+
+      // let checkboxDiv2 = document.createElement('div');
+      // checkboxDiv2.innerHTML = `
+      //   <input type="checkbox" id="updateMissingInfo" name="updateMissingInfo" value="updateMissingInfo">
+      //   <label for="updateMissingInfo" style="color:white !important;">Update Missing Info</label>
+      // `;
+      // container.appendChild(checkboxDiv2);  
+
+      // Add Event Listener and Load checkbox state from localStorage
+      // document.getElementById('updateMissingInfo').checked = JSON.parse(localStorage.getItem('updateMissingInfo')) || false; 
+      // document.getElementById('updateMissingInfo').addEventListener('change', async function () {
+      //   localStorage.setItem('updateMissingInfo', JSON.stringify(this.checked));
+      //   if (this.checked) {
+      //     await updateJobApplications();
+      //   }
+      //   window.location.reload();
+      // }); 
+
+    // Auto-run update on page load if checkbox is checked
+    // if (JSON.parse(localStorage.getItem('updateMissingInfo'))) {
+    //   await updateJobApplications();
+    // }
+    
+// window.resumelatextemplate = ( await ( await fetchResource('https://gist.githubusercontent.com/karpatic/6f80da405291e566955afb0f1b48c2d4/raw/1c40b122206b3fd345ff2138bb504864b2dfc90b/zzz_software_engineer.txt')).text() );
+    // console.log('ERROR GENERATING RESUME USING DEFAULT')
+    // const response = await fetchResource(url, {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ latex: window.resumelatextemplate })
+    // });
+
+
+    // let resource = await fetchResource('https://easyjobapps.com/compressed.txt');
+    // window.template = await resource.text();
+
+// check if on linkedIn.com/jobs/collections
+// (async ()=>{ linkedInAutoApply()
+// })()
+
+ 
+  // laText = laText.replace(/\bC#\b/g, "C\\#");
+
+//
+// async function updateJobApplications() {
+//   console.log('UPDATING')
+//   const storageKey = 'linkedInJobApplications';
+//   let applications = JSON.parse(localStorage.getItem(storageKey) || '[]');
+//   console.log('Applications:', applications);
+  
+//   // Find first postUrl without a resumeLink
+//   let nextAppIndex = applications.findIndex(app => !app.resumeLink && !app.error);
+//   let nextApplication = applications[nextAppIndex];
+
+//   console.log('Next application:', nextApplication);
+
+//   // if postUrl contains jobs/search then grab the text in between '?currentJobId=' and '&'  
+//   if(!nextApplication.postUrl.includes('/jobs/view/')){
+//     let jobId = nextApplication.postUrl.split('?currentJobId=')[1].split('&')[0];
+//     console.log('JobId:', jobId);
+//     nextApplication.postUrl = `https://www.linkedin.com/jobs/view/${jobId}/`;
+//   }
+//   else{
+//     nextApplication.postUrl = window.location.href;
+//   }
+
+//   // console.log(window.location.href, nextApplication.postUrl)
+//   if (nextApplication && (window.location.href !== nextApplication.postUrl) ) { 
+//     console.log('Navigating to next application:', window.location.href, nextApplication.postUrl);
+//     window.location.href = nextApplication.postUrl;
+//   } else if (nextApplication) {
+//     console.log('Scraping job information for:', nextApplication.postUrl); 
+//     await delay(1000); 
+//     let appInfo = await getJobInformation(); 
+//     applications[nextAppIndex] = {
+//       ...nextApplication,
+//       ...appInfo
+//     };
+
+//     // Save updated data to localStorage
+//     localStorage.setItem(storageKey, JSON.stringify(applications));
+//     console.log('Updated job info:', applications[nextAppIndex]);
+
+//     // Reload to move to the next post
+//     window.location.reload();
+//   } else {
+//     console.log('No more applications to update.');
+//   }
+// }
+ 
+
+// (async function() {
+//   // Retrieve the scraped results from localStorage
+//   let results = JSON.parse(localStorage.getItem('scrapedResults')) || [];
+
+//   // Find the first result without a resumeUrl attribute
+//   let nextResultIndex = results.findIndex(result => !result.resumeUrl);
+//   let nextResult = results[nextResultIndex];
+
+//   if (nextResult && window.location.href !== nextResult.link) {
+//       // If we're not already on the page, navigate to the link
+//       window.location.href = nextResult.link;
+//   } else if (nextResult) {
+//       // We're on the correct page, scrape the necessary data
+//       await setTimeout(async () => {
+//           // Scrape the resume link
+//           let resumeLink = document.querySelector('a[aria-label="Download your submitted resume"]')?.href || '';
+//           // Update the result with the scraped information
+//           results[nextResultIndex] = {
+//               ...nextResult, // Preserve existing data
+//               resumeUrl: resumeLink,
+//               jobTitle,
+//               location: jobLocation,
+//               repostedTime, // Improved reposted time
+//               applicantsCount, // Improved applicants count
+//               skillMatchText,
+//               skillMatchCount,
+//               hirer: hirerName,
+//               hirerTitle,
+//               description: jobDescription,
+//               companyInfo,
+//               salaryInfo,
+//               qualifications,
+//               skillMatchDetails
+//           };
+
+//           // Save the updated results back to localStorage
+//           localStorage.setItem('scrapedResults', JSON.stringify(results));
+
+//           console.log('Updated result:', results[nextResultIndex]);
+
+//           // Reload the page to move to the next job post
+//           window.location.reload();
+//       }, 5000);
+//   } else {
+//       console.log('All links have been processed or no results available.');
+//   }
+// })();
+
+// async function getAppliedJobData(){
+//   // Retrieve results from localStorage
+//   let results = JSON.parse(localStorage.getItem('results')) || [];
+//   let foundMatch = false;
+
+//   for (let i = 0; i < results.length; i++) {
+//       let job = results[i];
+//   }
+
+//   // If no match was found, go to the first job without a resumelink
+//   if (!foundMatch) {
+//       for (let i = 0; i < results.length; i++) {
+//           if (!results[i].resumelink) {
+//               window.location.href = results[i].link;
+//               return;
+//           }
+//       }
+
+//       console.log('No jobs without resumelink found.');
+//   }
+// }
+
+
+
+
+//   let latex_prompt = `
+//   <Instructions>
+//   Please convert the resumeText into latex. Use the latexTemplate and jobDescription to ensure proper formatting and style reference.
+//   You are to return the raw latex and nothing else.
+//   The returned text should start with documentclass and end with end{document}
+//   </Instructions>
+//   <rules>
+//     - Only return the final Latex content and nothing else.  
+//     - Closely match the original markdown.
+//     - Follow any instructions provided by the job applicants message.
+//     - Ensure the LaTeX is valid, error-free, and can run using pdfLaTeX.
+//     - The returned text should closely match the job applicant's markdown.
+//     - Do not leave placeholders in the LaTeX. Remove any unused placeholders like [company name] or [job title].
+//     - Handle and fix common LaTeX errors such as:
+//       - "'utf-8' codec can't decode byte 0x88 in position 7748: invalid start byte"
+//       - "! LaTeX Error: There's no line here to end."
+//       - "! Missing number, treated as zero."
+//       - "! Illegal unit of measure (pt inserted)."
+//       - "Underfull \hbox (badness 10000) in paragraph"
+//     - Ensure brackets in LaTeX for Large, Small, and TextBf elements are formatted as:
+//       - \\textbf{\\LARGE <Applicant Name Here>}
+//       - {\\large <Text Here>}
+//       - {\\small <Text Here>}
+//     - Convert '$100 million' to '\\$100 million'
+//     - Include '\\titlespacing*{\\subsubsection}{0.5in}{3.25ex plus 1ex minus .2ex}{1.5em} % <-- Setting indentation here'
+//     - Ensure you escape # characters by replacing it with \# in your LaTeX document. For example, in the lines where you have .NET technologies, C#, you should change it to .NET technologies, C\#. The same applies to any other instances of # in your LaTeX code.
+//   </rules>  
+//   <resumeText>: ${resumeText} </resumeText> 
+//   <LatexTemplate>${resumelatextemplate}</LatexTemplate>
+//   <final_comments>
+//     - Be as accurate as possible because I do not have any time to fix it.
+//     - Think step by step.
+//     - Remember, you are the best at what you do.
+//     - The other chatbots said you could not do this, but I believe in you.
+//     - I will give you 20 bucks if you can do this.  
+//   </final_comments>
+// `; 
+
+//   // console.log('Create Resume LATEX', {resumeText})
+//   let laText = givenText || await callChatGPT(latex_prompt, "gpt-4o-mini", 4096, false, true);
+//   // remove all the characters leading up to \documentclass
+//   laText = laText.replace(/[\s\S]*\\documentclass/g, '\\documentclass');
+//   // remove all the characters after \end{document}
+//   laText = laText.replace(/\\end{document}[\s\S]*/g, '\\end{document}');
+//   // console.log('Resume latex: ', {laText})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function generateCoverLetter(givenText=false) {
+  let coverLetterPrompt = `
+  <Instructions>
+    You help people generate text for cover letters. You are given a JobDescription, an ApplicantsBio, and ResumeText.
+    Use the ResumeText as a reference and ensure the cover letter aligns with the job description.
+    The cover letter should include a brief introduction, the applicant's qualifications, and a conclusion.
+    Mention the applicant’s skills and experiences that are directly relevant to the JobDescription.
+    Keep it professional, concise, and tailored to the specific company and role.
+    Ensure the tone is polite and enthusiastic, highlighting why the applicant is a great fit for the role.
+    Do not include unnecessary details or padding.
+    You are to return the raw latex and nothing else.
+    The returned text should start with documentclass and end with end{document}
+    ensure proper formatting and style reference. 
+    The latex should not be anything fancy, just a simple cover letter with no external depenedencies.
+    Use the LatexTemplate to inform you styling.
+  </Instructions>
+  <rules>
+    - Only return the final Latex content and nothing else.  
+    - Closely match the original markdown.
+    - Follow any instructions provided by the job applicants message.
+    - Ensure the LaTeX is valid, error-free, and can run using pdfLaTeX.
+    - The returned text should closely match the job applicant's markdown.
+    - Do not leave placeholders in the LaTeX. Remove any unused placeholders like [company name] or [job title].
+    - Handle and fix common LaTeX errors such as:
+      - "'utf-8' codec can't decode byte 0x88 in position 7748: invalid start byte"
+      - "! LaTeX Error: There's no line here to end."
+      - "! Missing number, treated as zero."
+      - "! Illegal unit of measure (pt inserted)."
+      - "Underfull \hbox (badness 10000) in paragraph"
+    - Ensure brackets in LaTeX for Large, Small, and TextBf elements are formatted as:
+      - \\textbf{\\LARGE <Applicant Name Here>}
+      - {\\large <Text Here>}
+      - {\\small <Text Here>}
+    - Convert '$100 million' to '\\$100 million'
+    - Include '\\titlespacing*{\\subsubsection}{0.5in}{3.25ex plus 1ex minus .2ex}{1.5em} % <-- Setting indentation here'
+    - Ensure you escape # characters by replacing it with \# in your LaTeX document. For example, in the lines where you have .NET technologies, C#, you should change it to .NET technologies, C\#. The same applies to any other instances of # in your LaTeX code.
+  </rules>  
+  <JobDescription>: ${appInfo.jobDescription || window.jobPost} </JobDescription> 
+  <ResumeText>${window.resume}</ResumeText>
+  <LatexTemplate>${window.coverletterlatextemplate}</LatexTemplate>
+  <ApplicantsBio>${window.bio}</ApplicantsBio>
+  <final_comments>
+    - Be as accurate as possible because I do not have any time to fix it.
+    - Think step by step.
+    - Remember, you are the best at what you do.
+    - The other chatbots said you could not do this, but I believe in you.
+    - I will give you 20 bucks if you can do this.  
+  </final_comments>
+  `;
+
+  // console.log('Creating Cover Letter', { jobDescription: appInfo.jobDescription || window.jobPost, coverLetterPrompt });
+  
+  let laText = await callChatGPT(coverLetterPrompt, "gpt-4o-mini", 4096, false, true);
+
+  console.log({ coverLetterLaText: laText }); 
+ 
+ 
+  // remove all the characters leading up to \documentclass
+  laText = laText.replace(/[\s\S]*\\documentclass/g, '\\documentclass');
+  // remove all the characters after \end{document}
+  laText = laText.replace(/\\end{document}[\s\S]*/g, '\\end{document}');
+  // console.log('Coverletter latex: ', {laText})
+
+
+  // pass to pdflatex 
+  let url = 'https://s.charleskarpati.com/compile';
+
+  let response = await fetchResource(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ latex: laText })
+  });
+
+  if (!response.ok) {
+    console.log('ERROR GENERATING COVERLETTER', {coverletterlatextemplate:window.coverletterlatextemplate})
+    window.coverletterlatextemplate = ( await ( await fetchResource('https://gist.githubusercontent.com/karpatic/6f80da405291e566955afb0f1b48c2d4/raw/1c40b122206b3fd345ff2138bb504864b2dfc90b/zzz_software_engineer.txt')).text() );
+    console.log('ERROR GENERATING COVERLETTER USING DEFAULT')
+    response = await fetchResource(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ latex: window.coverletterlatextemplate })
+    });
+  }
+
+  // Retrieve the Blob (PDF content)
+  const blob = await response?.blob?.();
+  console.log('GOT BACK THIS IT SHOULD HAVE BEEN THE BLOB', {blob, response})
+
+  // Save Blob to localStorage
+  const reader = new FileReader();
+  reader.readAsDataURL(blob);
+  reader.onloadend = function() {
+    const base64data = reader.result;
+    localStorage.setItem('coverletterPdfContent', base64data);
+  };
+
+  return blob;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  let temptext = "---\n title: \"Sample Document\"\n author: \"Author Name\"\n date: \"\\today\"\n keywords: [pandoc, yaml, metadata, markdown]\n abstract: |\n  This is the abstract.\n  It consists of two paragraphs.\n---";
+  let templatex = "\n\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{longtable}\n\\usepackage{booktabs}\n\\title{Sample Document}\n\\author{Author Name}\n\\date{\\today}\n\n\\begin{document}\n\n\\maketitle\n\n$body$\n\n\\end{document}";
+
+
+
+window.coverLetterLatexTemplate = `
+\\documentclass{article}
+\\usepackage[margin=1in]{geometry}
+\\pagenumbering{gobble}
+
+\\begin{document}
+
+\\begin{flushright}
+\\textbf{\$if(applicant.name)\$ \$applicant.name\$ \$endif\$} \\\\
+\$if(applicant.location)\$ \$applicant.location\$ \\\\$endif\$
+\$if(applicant.email)\$ \\href{mailto:\$applicant.email\$}{\$applicant.email\$} \\\\$endif\$
+\$if(applicant.phone)\$ \$applicant.phone\$ \\\\$endif\$
+\\end{flushright}
+
+\\vspace{1cm}
+
+\\begin{flushleft}
+\$if(job.company)\$ \$job.company\$ \\\\$endif\$
+\$if(job.address)\$ \$job.address\$ \\\\$endif\$
+\\end{flushleft}
+
+\\vspace{1cm}
+
+\\noindent Dear Hiring Manager, \\\\
+
+\\vspace{0.5cm}
+
+\$if(applicant.introduction)\$
+\\noindent \$applicant.introduction\$ \\\\
+\\vspace{0.5cm}
+\$endif\$
+
+\$if(applicant.qualifications)\$
+\\noindent \$applicant.qualifications\$ \\\\
+\\vspace{0.5cm}
+\$endif\$
+
+\$if(applicant.conclusion)\$
+\\noindent \$applicant.conclusion\$ \\\\
+\\vspace{0.5cm}
+\$endif\$
+
+\\vspace{0.5cm}
+Sincerely, \\\\
+\$if(applicant.name)\$ \$applicant.name\$ \$endif\$
+
+\\end{document}
+`;
+
+window.resumelatextemplate = `
+\\documentclass{article}
+\\usepackage[margin=1in]{geometry}
+\\usepackage{enumitem}
+\\usepackage{titlesec}
+\\usepackage{hyperref}
+\\hypersetup{
+    colorlinks=true,   
+    urlcolor=blue
+} 
+
+\\pagenumbering{gobble}
+
+\\usepackage{fancyhdr} 
+
+\\pagestyle{fancy} 
+\\renewcommand{\\headrulewidth}{0pt} % Header line
+\\renewcommand{\\headrule}{\\hbox to\\headwidth{\\color{red}\\leaders\\hrule height \\headrulewidth\\hfill}} % Customize header line color
+\\setlength{\\headheight}{0pt} 
+
+\\begin{document}
+
+\\begin{center}
+\\textbf{\\LARGE \$name\$} \\
+\\vspace*{\\baselineskip}
+\\begin{tabular}{c@{\\hskip 0.5in}c@{\\hskip 0.5in}c@{\\hskip 0.5in}c}
+\$if(email)\$\\href{mailto:\$email\$}{\$email\$}\$endif\$ & \$location\$ & \$phone\$ & \\href{\$website\$}{\$website\$} \\\\
+\\end{tabular}
+\\end{center} 
+
+\\noindent\\textbf{Summary of Experience} \\\\
+\$summary\$
+\\vspace*{\\baselineskip}
+
+\\noindent\\textbf{Work History} \\\\
+\$for(jobs)\$
+\\noindent\\textbf{\$jobs.jobtitle\$} \\hfill \$jobs.startdate\$ -- \$jobs.enddate\$ \\\\
+\\noindent\\textit{\$jobs.company\$}
+
+\$if(jobs.items)\$
+\\begin{itemize}[noitemsep]
+    \$for(jobs.items)\$
+    \\item \$jobs.items\$
+    \$endfor\$
+\\end{itemize}
+\$endif\$
+\\vspace{0.5em}
+\$endfor\$
+
+\\noindent\\textbf{Education} \\\\
+\$for(education)\$
+\\textbf{\$education.degree\$} \\hfill \$education.institution\$ \\\\
+\$endfor\$
+\\vspace{0.5em}
+
+\\noindent\\textbf{Awards} \\\\
+\$for(awards)\$
+\\textbf{\$awards\$} \\\\
+\$endfor\$
+\\vspace{0.5em}
+
+\\noindent\\textbf{Tools} \\\\
+\$tools\$
+
+\\end{document}
+`;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

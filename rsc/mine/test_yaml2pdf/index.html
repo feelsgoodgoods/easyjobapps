@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charles Karpati - Resume</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <script>
+    // YAML-like data as a JavaScript string
+    const resumeData = `
+    ---
+    name: "Charles Karpati"
+    email: "Charles.Karpati@gmail.com"
+    location: "Bethesda, MD"
+    phone: "+1-301-300-4728"
+    website: "http://CharlesKarpati.com"
+    summary: "With over 10 years of software development experience, I specialize in UX/UI development, data-driven design, and web-based visualizations. My expertise includes creating intuitive user interfaces and impactful visual representations using tools like Power BI, HTML, and CSS. I have successfully collaborated with cross-functional teams to deliver multi-level roadmaps and scoping plans, ensuring alignment with business objectives. My strong background in API integration, wireframing, and prototyping (Figma) combined with a passion for innovative solutions, empowers me to tackle complex challenges and enhance user experiences."
+    jobs:
+      - jobtitle: Software Developer
+        company: AutoApply
+        startdate: March 2024
+        enddate: June 2024
+        items:
+          - Designed and implemented an AI Chrome Extension to automate form filling, enhancing user experience and efficiency (React, SQLite).
+          - Developed robust backend infrastructure and file management systems, ensuring data integrity and security (JWT, OAuth2).
+          - Employed machine learning algorithms to train and fine-tune AI models, ensuring quality and safety in deployment.
+          - Managed domains and SSL/TLS configurations for self-hosted private cloud services.
+          - Researched and installed a server rack to self-host private cloud services, optimizing operational costs.
+          - Engineered a dev-ops pipeline for CI/CD, streamlining deployment processes (Docker, SFTP, SSH).
+          - Elicited requirements from customers to resolve their problems and satisfy expectations, demonstrating strong communication skills.
+          - Created wireframes and prototypes using Figma to improve user workflows and interface usability.
+          - Developed Power BI dashboards to visualize operational metrics, increasing team visibility into key performance indicators.
+          - Created web-based interactive data visualizations using HTML, CSS, and JavaScript, improving user engagement.
+      
+      - jobtitle: Chief Technology Officer
+        company: Addy-AI
+        startdate: May 2023
+        enddate: February 2024
+        items:
+          - Co-founded AddyAI, an automated AI email response service with over 10,000 users, showcasing entrepreneurial skills.
+          - Achieved a $10M valuation for AddyAI during pre-seed funding after successful pitches to Fortune 500 companies and venture capitalists.
+          - Secured $400k in vc support and from programs like Google For Startups.
+          - Led adversarial testing for AI safety and model security, ensuring compliance with industry standards.
+          - Developed Langdrive, an open-source automated LLM fine-tuning solution, enhancing user interface capabilities.
+          - Created an admin panel for AI email customization, enhancing user engagement and satisfaction.
+          - Communicated complex AI concepts to diverse audiences, facilitating product marketing and fundraising efforts.
+          - Utilized data-driven approaches to visualize AI performance metrics using Power BI, providing insights for stakeholders.
+          - Collaborated on wireframing and UI design efforts for the platform's front-end, creating streamlined user journeys.
+          - Led the development of user-centric data dashboards for real-time analysis of AI interaction data, supporting continuous improvement.
+
+      - jobtitle: Software Developer
+        company: Voxels.com
+        startdate: March 2022
+        enddate: May 2023
+        items:
+          - Led blockchain development initiatives, enhancing web3 capabilities and fostering partnerships (Solidity, Ethers).
+          - Led efforts to squash bugs, redesign the site, and add features like livestream support, HLS .m3u8 files, and in-game transactions.
+          - Collaborated with UI/UX engineers for site redesigns, implementing user feedback for continuous improvement.
+          - Volunteered as a metaverse development instructor and HackaTRON judge.
+          - Documented system architecture and resolved software bugs, ensuring high-quality deliverables.
+          - Engaged in agile methodologies, contributing to team discussions and code reviews.
+          - Developed in-game enhancements, integrating real-time video streaming for immersive user experiences.
+          - Built custom data visualizations using D3.js to display blockchain transaction statistics in real-time.
+          - Designed and deployed web-based visualizations that allowed users to interact with blockchain data insights.
+
+      - jobtitle: Lecturer
+        company: National Science Foundation
+        startdate: January 2020
+        enddate: November 2021
+        items:
+          - Taught Python for Big Data to graduate students, enhancing their data analysis skills.
+          - Developed curriculum in collaboration with universities, ensuring alignment with academic standards.
+          - Mentored students through data science projects, fostering their professional growth and technical expertise.
+          - Developed interactive data visualization lessons, helping students understand and implement visual analytics.
+
+      - jobtitle: Web Developer
+        company: Baltimore Neighborhood Indicators Association, Baltimore, MD
+        startdate: January 2017
+        enddate: November 2021
+        items:
+          - Generated 150 annual quality of life statistics used by Baltimore City's agencies and non-profits, demonstrating data-driven decision-making.
+          - Acted as data steward, implementing data management policies to enhance integrity and analytical capabilities.
+          - Designed and administered the organization's main website, enhancing digital presence and user engagement (WordPress, PHP, SQL).
+          - Developed tools for data visualization and analysis, including the Equity Tracker and Business Integration Search tool.
+          - Engineered VitalSigns, generating core data for the organization, improving data accessibility.
+          - Developed custom data visualizations using Plotly and Power BI for city-wide quality-of-life statistics, improving public data transparency.
+          - Developed the Green Patterns Map, a web-based map application for visualizing water usage in Baltimore, backed by the EPA's Forest Service.
+
+      - jobtitle: Freelance Developer
+        startdate: January 2009
+        enddate: Present
+        items:
+          - Developed systems for various clients, including a law firm and an art school, showcasing versatility in project execution.
+          - Created GPT Watch, an Android app for querying ChatGPT, enhancing user productivity.
+          - Engineered CryptoTrader, achieving 40x returns in one year.
+          - Created Telegram Recap, an AI-driven tool for generating chat recaps, enhancing communication efficiency.
+          - Engineered NEAR Library, receiving a grant to build a virtual library in the metaverse, demonstrating innovative thinking.
+          - Created wireframes and prototypes to test and iterate on design ideas for custom web solutions.
+          - Developed Baltimore Open Land Data, a web-based tool that streamlines data collection and analysis for stakeholders in community redevelopment efforts.
+          - Worked with clients to develop data-driven web interfaces that visualize key business metrics using Power BI and custom HTML/CSS solutions.
+    education:
+      - degree: "MS in Information Systems"
+        institution: "University of Maryland, Baltimore County"
+      - degree: "BS in Information Systems"
+        institution: "University of Maryland, Baltimore County"
+
+    awards:
+      - "GitHub Open-Source Accelerator alumni (AddyAI, 2024)"
+      - "Venture Bridge Alumni, Carnegie Mellon Accelerator (AddyAI, 2023)"
+    tools: "HTML, CSS, JavaScript, TypeScript, Node.js, Python, SQL, NoSQL, PostgreSQL, MySQL, SQLite, Redis, Bash, PHP, Java, C++, React, Preact, Redux, Webpack, Cron, PM2, SSH, Docker, Docker-Compose, Nginx, HTTPS, SSL/TLS, LetsEncrypt, SystemD, Express, Passport, Apache, Flask, Git, GitHub, Heroku, Digital Ocean, AWS Lambda, EC2, S3, Google Cloud Console, Cloudflare, Firebase, WordPress, OAuth2, Twilio, Jira, Esri, Socrata, Leaflet, PostGIS, GraphQL, D3.js, Babylon.js, Three.js, Matplotlib, Seaborn, Vega, Plotly, Altair, TensorFlow, ONNX, OpenAI, Gradio, Ollama, HuggingFace, Langchain, Numpy, Pandas, OpenSeas, Solidity, Ethers, Infura, Alchemy, Web3, CircleCI, Power BI, Figma, Ionic, Tailwind, Styled Components, Bootstrap"
+    ---
+    `;
+
+    // Function to parse YAML-like string
+    function parseYAML(yamlString) {
+        const lines = yamlString.trim().split('\n');
+        const data = {};
+        let currentKey = '';
+        let currentArray = null;
+
+        for (let line of lines) {
+            line = line.trim();
+            if (line === '---') continue;
+            
+            if (line.includes(':')) {
+                const [key, value] = line.split(':').map(s => s.trim());
+                if (value) {
+                    data[key] = value.replace(/^"(.*)"$/, '$1');
+                } else {
+                    currentKey = key;
+                    data[currentKey] = [];
+                    currentArray = data[currentKey];
+                }
+            } else if (line.startsWith('-') && currentArray) {
+                currentArray.push(line.slice(1).trim());
+            } else if (currentKey && line) {
+                data[currentKey] += ' ' + line;
+            }
+        }
+        return data;
+    }
+
+    // Parse the YAML data
+    const data = parseYAML(resumeData);
+
+    // Function to generate HTML
+    function generateHTML(data) {
+        return `
+        <div id="resume-content">
+            <div class="header">
+                <h1>${data.name}</h1>
+                <div class="contact-info">
+                    ${data.email} • ${data.location} • ${data.phone} • <a href="${data.website}">${data.website}</a>
+                </div>
+            </div>
+
+            <h2>Summary</h2>
+            <p>${data.summary}</p>
+
+            <h2>Work Experience</h2>
+            ${data.jobs.map(job => `
+                <div class="job">
+                    <div class="job-header">${job.jobtitle}</div>
+                    <div>${job.company}</div>
+                    <div class="job-date">${job.startdate} - ${job.enddate}</div>
+                    <ul>
+                        ${job.items.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('')}
+
+            <h2>Education</h2>
+            ${data.education.map(edu => `
+                <div>${edu.degree}</div>
+                <div>${edu.institution}</div>
+            `).join('')}
+
+            <h2>Awards</h2>
+            <ul>
+                ${data.awards.map(award => `<li>${award}</li>`).join('')}
+            </ul>
+
+            <h2>Tools & Technologies</h2>
+            <p>${data.tools}</p>
+        </div>
+
+        <button id="exportBtn">Export as PDF</button>
+        `;
+    }
+
+    // Generate and set the HTML content
+    document.body.innerHTML = generateHTML(data);
+
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 12px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .contact-info {
+            margin-top: 5px;
+        }
+        h2 {
+            font-size: 18px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+        .job {
+            margin-bottom: 20px;
+        }
+        .job-header {
+            font-weight: bold;
+        }
+        .job-date {
+            font-style: italic;
+        }
+        ul {
+            margin-top: 5px;
+            padding-left: 20px;
+        }
+        #exportBtn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Add PDF export functionality
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        const element = document.getElementById('resume-content');
+        const opt = {
+            margin: 10,
+            filename: 'charles_karpati_resume.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{multicol}
+
+\hypersetup{
+    colorlinks=true,   
+    urlcolor=blue
+}
+
+\pagestyle{empty} % No page numbering
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.5ex plus 0.5ex minus 0.5ex}
+
+% Define section styling
+\titleformat{\section}[block]{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}[runin]{\bfseries}{\thesubsection}{1em}{}
+
+% Color blocks for sections
+\newcommand{\sectionblock}[1]{
+    \vspace{0.5em}
+    \noindent
+    \colorbox{gray!10}{\textbf{\Large #1}}
+    \vspace{0.5em}
+    \par
+}
+
+\begin{document}
+
+\begin{center}
+    \textbf{\huge $name$} \\[0.5em]
+    \begin{tabular}{rl}
+        \href{mailto:$email$}{$email$} & $if(location)$ $location$ $endif$ \\[0.5em]
+        $if(phone)$ \href{tel:$phone$}{$phone$} & $endif$ 
+        $if(website)$ \href{$website$}{$website$} $endif$ \\[0.5em]
+    \end{tabular}
+\end{center}
+
+% Start two-column layout
+\begin{multicols}{2}
+
+    % Left column content
+    $if(summary)$
+        \sectionblock{Summary}
+        \noindent $summary$
+    $endif$
+
+    $if(education)$
+        \sectionblock{Education}
+        $for(education)$
+            \noindent \textbf{$education.degree$} \hfill $education.institution$ \\
+        $endfor$
+        \vspace{1em}
+    $endif$
+
+    $if(awards)$
+        \sectionblock{Awards}
+        $for(awards)$
+            \noindent \textit{$awards$} \\
+        $endfor$
+        \vspace{1em}
+    $endif$
+
+    $if(tools)$
+        \sectionblock{Technical Skills}
+        $for(tools)$
+            \noindent $tools$,
+        $endfor$
+        \vspace{1em}
+    $endif$
+
+    % Work experience will automatically flow into the right column
+    $if(jobs)$
+        \sectionblock{Work Experience}
+        $for(jobs)$
+            \noindent \textbf{$jobs.jobtitle$} \hfill $jobs.startdate$ - $jobs.enddate$ \\
+            \textit{$jobs.company$} \\
+            $if(jobs.items)$
+            \begin{itemize}[noitemsep, topsep=0pt]
+                $for(jobs.items)$
+                    \item $jobs.items$
+                $endfor$
+            \end{itemize}
+            $endif$
+            \vspace{1em}
+        $endfor$
+    $endif$
+
+\end{multicols}
+
+\end{document}

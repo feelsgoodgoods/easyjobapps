@@ -1,0 +1,7 @@
+{
+    "watch": ["shared", "client", "rsc"],
+    "ignore": ["client/content*.js"],
+    "ext": "js,jsx,ts,tsx,css,html",
+    "exec": "npm run build"
+}
+  

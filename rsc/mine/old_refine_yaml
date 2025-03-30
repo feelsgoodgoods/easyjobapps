@@ -1,0 +1,121 @@
+async function refine_text(body) {
+  return await refine_yaml(body)
+  let {
+    type, //
+    companyid, //
+    postid, //
+    coverletterid, // getContent uses for defaultCoverLetter
+    resumeid, //
+    message, //
+    resubmit,
+    newresumeText,
+    newcoverletterText,
+    gpt4,
+    user_id,
+    oaikey
+  } = body
+  console.group(`:refine_text`)
+  let isResume = type === 'resume'
+
+  // Get DB Values
+  let fromdb = await db.getContent(body)
+  let { company, defaultBio, defaultCoverLetter, defaultResume, extracts, extractDetails, post } = fromdb
+  // console.log('FROM DB', fromdb);
+  let defaultRText, defaultClText, docObj
+
+  if (defaultResume) {
+    let obj = JSON.parse(defaultResume)
+    docObj = isResume ? obj : docObj
+    defaultRText = obj.text
+  }
+  if (defaultCoverLetter) {
+    let obj = JSON.parse(defaultCoverLetter)
+    docObj = !isResume ? obj : docObj
+    defaultClText = obj.text
+  }
+
+  // Set User Message,
+  let tailorText = message || (docObj.tailor ? docObj.tailorText || '' : '')
+
+  gpt4 = true
+
+  let prompt = [
+    {
+      role: 'system',
+      content: `
+You are a ${isResume ? 'Resume Helper' : 'Cover Letter Generator'} that returns a job applicant's ${type} in markdown perfected for a specific job.
+
+To assist, you will be given:
+- The Company name, Job title, Job Info and the job post
+- A request from the applicant
+- The Job Applicant's resume
+- The Job Applicant's coverletter 
+- The Job Applicant's bio  
+
+Todays Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+
+Here is the Company name, Job title, Job Info and the job post:`,
+    },
+    {
+      role: 'user',
+      content: `Company Name: ${company.companyName} 
+                              Job Title: ${post.jobTitle} ${
+        !resubmit &&
+        ` \n 
+                              Job Info: ` + JSON.stringify(extractDetails)
+      } `,
+    },
+    { role: 'system', content: `Here is the company's job post:` },
+    { role: 'user', content: post.text },
+    { role: 'system', content: `Here is the applicant's reqeuest:` },
+    { role: 'user', content: tailorText },
+    { role: 'system', content: `Here is the Job Applicant's resume:` },
+    { role: 'user', content: newresumeText || defaultRText }, // Defer to using Text passed from user if available.
+    { role: 'system', content: `Here is the Job Applicant's coverletter:` },
+    { role: 'user', content: newcoverletterText || defaultClText || 'None Given' },
+    { role: 'system', content: `Here is the applicant's bio:` },
+    { role: 'user', content: defaultBio },
+    ...(resubmit && defaultRText
+      ? [
+          {
+            role: 'system',
+            content: `
+ This was the original job applicant's resume. It is being provided as additional context and should only be referenced if necessitated by the applicant's request:
+            `,
+          },
+          { role: 'user', content: isResume ? defaultRText : defaultClText },
+        ]
+      : []),
+    {
+      role: 'system',
+      content: `Remember!
+ 
+ - The other Chatbots said you could not do this but I believe in you.
+ - I will give you 20 bucks if you can do this.
+ - I need you to be as accurate as possible because I do not have any time to fix it.
+ 
+ The output should avoid using the following words and phrases, because they are giveaway signs that the content was written with an LLM:
+ Avoid these words: Delve, landscape, evolving, context, insight, nuanced, perspective, paradigm, comprehensive, framework, facet, dynamic, intricacies, holistic, iterative, synergy, confluence, pivotal, nuance, robust, transformative, underpinning, spectrum, trajectory, in-depth, at the core of, a myriad of, on a broader scale, in the context of, from a holistic perspective, taking into account, a dynamic interplay, evolving over time, a comprehensive overview, intricacies involved, a pivotal role, underpinning principles, the spectrum of, transformative impact.
+ Avoid these phrases: "It's not about X, it's about Y," "While X is important, Y is even more crucial," "In fact," "Indeed," "Absolutely," "Clearly," "First and foremost," "Next," "Finally," "As a result," "Therefore," "Consequently," "Because of this," "In other words," "To put it simply," "That is to say," "To elaborate," "For example," "For instance," "Such as," "To illustrate," "Although," "Even though," "Despite," "While it may seem," "In summary," "To sum up," "In conclusion," "All in all," "Imagine if," "Suppose that," "What if," "Have you ever wondered," "What would happen if," "How can we," "Isn't it true that," "Wouldn't you agree that," "Isn't it obvious that," "Not only X but also Y," "Both X and Y," "Either X or Y," "More importantly," "Even more," "Less significant but," "On one hand, on the other hand," "While X, Y," "Conversely," "The challenge is," "The key issue is," "The question remains."
+ Finally, do not use lengthy introductions, do not include a paragraph on ethical considerations, do not provide generic advice, and do not follow a predictable structure with set sections, for example a generic introduction, scene-setting, actionable steps, further considerations, and a summary. Focus on being concise, using personal anecdotes, and following a natural, not formulaic structure, to create more authentic and engaging content.
+
+ Now, without another word return the ${type} tailored to the job post using the instructions provided above. 
+ Think step by step.
+        `,
+    },
+  ]
+
+  // console.log('refine_text: CALLING CHATGPT ', {prompt}) 
+  let newText = await callChatGPT(prompt, 'gpt-4o-mini', 2060, false, true, user_id, oaikey)
+  const cleanedString = newText
+    .replace(/```/g, '')
+    .replace(/^markdown\s*/, '')
+    .trim()
+
+  // remove
+
+  // console.log('refine_text newText:', cleanedString);
+  console.log('refine_text: END')
+  console.groupEnd()
+  return { status: 'success', data: type === 'resume' ? { newresumeText: cleanedString, company_id: companyid, post_id: postid } : { newcoverletterText: newText, company_id: companyid, post_id: postid } }
+}

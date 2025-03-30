@@ -1,3 +1,5 @@
 dist/_worker.js
 node_modules/ 
 .dev.vars
+stripe
+.env

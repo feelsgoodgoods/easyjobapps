@@ -1,0 +1,88 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{multicol}
+\usepackage{graphicx}
+
+\hypersetup{
+    colorlinks=true,   
+    urlcolor=blue
+}
+
+\pagestyle{empty} % No page numbering
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex plus 0.5ex minus 0.5ex}
+
+% Define section styling
+\titleformat{\section}[block]{\large\bfseries\color{blue!60}}{}{0em}{}
+
+% Custom header formatting
+\newcommand{\sectionheader}[1]{
+    \noindent\textbf{\Large #1}\\ \rule{\dimexpr\textwidth-1in}{0.3mm}
+    \\
+}
+
+
+\begin{document}
+
+\begin{center}
+    {\huge\textbf{$name$}}\\[0.5em]
+    \textit{$if(title)$$title$$endif$}\\[1em]
+    \begin{tabular}{rl}
+        \href{mailto:$email$}{$email$} & $if(location)$ $location$ $endif$ \\[0.5em]
+        $if(phone)$ \href{tel:$phone$}{$phone$} & $endif$ 
+        $if(website)$ \href{$website$}{$website$} $endif$\\
+    \end{tabular}
+\end{center}
+
+$if(summary)$
+    \sectionheader{Summary} \\
+    $summary$ \\
+$endif$
+
+$if(jobs)$
+    \sectionheader{Work Experience} \\ 
+    $for(jobs)$
+        \textbf{$jobs.jobtitle$} \hfill $jobs.startdate$ - $jobs.enddate$ \\
+        \textit{$jobs.company$}
+        \vspace{.5em}
+        $if(jobs.items)$
+        \begin{itemize}[noitemsep, topsep=0pt]
+            $for(jobs.items)$
+                \item $jobs.items$
+            $endfor$
+        \end{itemize}
+        $endif$
+        \vspace{1em}
+    $endfor$
+$endif$
+
+$if(education)$
+    \sectionheader{Education} \\ 
+    $for(education)$
+        \textbf{$education.degree$} \hfill $education.institution$ \\
+    $endfor$ 
+$endif$
+
+$if(awards)$
+    \sectionheader{Awards} \\
+    $for(awards)$
+        \textit{$awards$}\\
+    $endfor$ 
+$endif$
+
+$if(tools)$
+    \sectionheader{Technical Skills}
+    \begin{multicols}{2}
+        \begin{itemize}[noitemsep]
+            $for(tools)$
+                \item $tools$
+            $endfor$
+        \end{itemize}
+    \end{multicols} 
+$endif$
+
+\end{document}

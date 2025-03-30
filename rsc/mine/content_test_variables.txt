@@ -1,0 +1,249 @@
+// window.resume = `---
+// name: "Charles Karpati"
+// email: "Charles.Karpati@gmail.com"
+// location: "Bethesda, MD"
+// phone: "+1-301-300-4728"
+// website: "http://CharlesKarpati.com"
+// summary: "With over 10 years of software development experience, I specialize in UX/UI development, data-driven design, and web-based visualizations. My expertise includes creating intuitive user interfaces and impactful visual representations using tools like Power BI, HTML, and CSS. I have successfully collaborated with cross-functional teams to deliver multi-level roadmaps and scoping plans, ensuring alignment with business objectives. My strong background in API integration, wireframing, and prototyping (Figma) combined with a passion for innovative solutions, empowers me to tackle complex challenges and enhance user experiences."
+// jobs:
+//   - jobtitle: Software Developer
+//     company: AutoApply
+//     startdate: March 2024
+//     enddate: June 2024
+//     items:
+//       - Designed and implemented an AI Chrome Extension to automate form filling, enhancing user experience and efficiency (React, SQLite).
+//       - Developed robust backend infrastructure and file management systems, ensuring data integrity and security (JWT, OAuth2).
+//       - Employed machine learning algorithms to train and fine-tune AI models, ensuring quality and safety in deployment.
+//       - Managed domains and SSL/TLS configurations for self-hosted private cloud services.
+//       - Researched and installed a server rack to self-host private cloud services, optimizing operational costs.
+//       - Engineered a dev-ops pipeline for CI/CD, streamlining deployment processes (Docker, SFTP, SSH).
+//       - Elicited requirements from customers to resolve their problems and satisfy expectations, demonstrating strong communication skills.
+//       - Created wireframes and prototypes using Figma to improve user workflows and interface usability.
+//       - Developed Power BI dashboards to visualize operational metrics, increasing team visibility into key performance indicators.
+//       - Created web-based interactive data visualizations using HTML, CSS, and JavaScript, improving user engagement.
+//       - Produced and hosted a Latex2PDF service, along with Html2Img, Html2Md, and Html2Txt services (PM2, Docker, DockerSwarm, Venv).
+//       - Re-implemented SQLite in the browser to share code between the server and browser for efficient data management.
+//       - Automated DDNS IP updates for the private cloud using Bash, Cloudflare API, and Cron to ensure uptime.
+
+//   - jobtitle: Chief Technology Officer
+//     company: Addy-AI
+//     startdate: May 2023
+//     enddate: February 2024
+//     items:
+//       - Co-founded AddyAI, an automated AI email response service with over 10,000 users, showcasing entrepreneurial skills.
+//       - Achieved a $10M valuation for AddyAI during pre-seed funding after successful pitches to Fortune 500 companies and venture capitalists.
+//       - Secured $400k in vc support and from programs like Google For Startups.
+//       - Led adversarial testing for AI safety and model security, ensuring compliance with industry standards.
+//       - Developed Langdrive, an open-source automated LLM fine-tuning solution, enhancing user interface capabilities.
+//       - Created an admin panel for AI email customization, enhancing user engagement and satisfaction.
+//       - Communicated complex AI concepts to diverse audiences, facilitating product marketing and fundraising efforts.
+//       - Utilized data-driven approaches to visualize AI performance metrics using Power BI, providing insights for stakeholders.
+//       - Collaborated on wireframing and UI design efforts for the platform's front-end, creating streamlined user journeys.
+//       - Led the development of user-centric data dashboards for real-time analysis of AI interaction data, supporting continuous improvement.
+//       - Created wireframes and prototypes to test and iterate on design ideas for custom web solutions.
+//       - Automated Email Responder: 5 Cron jobs, auto-scaling instances.
+//       - CLI and API for training LLMs, preparing data, deploying to the cloud (HuggingFace or Heroku).
+//       - Tools for training, hosting, and interfacing with a chatbot.
+//       - Documentation: [Addy Diagrams](https://observablehq.com/@karpatic/addy-diagrams)
+//       - Evaluated model safeguards and used real-world adversarial tactics and techniques to identify failures, vulnerabilities, and potential misuses.
+//       - Developed tools for adversarial testing to ensure AI safety and model security.
+//       - Implemented CI/CD pipelines using SFTP, SSH, and DockerCompose to streamline deployments.
+
+//   - jobtitle: Software Developer
+//     company: Voxels.com
+//     startdate: March 2022
+//     enddate: May 2023
+//     items:
+//       - Led blockchain development initiatives, enhancing web3 capabilities and fostering partnerships (Solidity, Ethers).
+//       - Led efforts to squash bugs, redesign the site, and add features like livestream support, HLS .m3u8 files, and in-game transactions.
+//       - Added support for HLS live streaming and in-game purchases.
+//       - Monolithic codebase with microservices built in Typescript.
+//       - Collaborated with UI/UX engineers for site redesigns, implementing user feedback for continuous improvement.
+//       - Volunteered as a metaverse development instructor and HackaTRON judge.
+//       - Documented system architecture and resolved software bugs, ensuring high-quality deliverables.
+//       - Engaged in agile methodologies, contributing to team discussions and code reviews.
+//       - Developed in-game enhancements, integrating real-time video streaming for immersive user experiences.
+//       - Built custom data visualizations using D3.js to display blockchain transaction statistics in real-time.
+//       - Designed and deployed web-based visualizations that allowed users to interact with blockchain data insights.
+//       - Diagram for notification element components: [ObservableHQ](https://observablehq.com/d/358876d9d046ab42)
+//       - Developed in-game enhancements, including real-time video streaming and integration of the Proof-of-Attendance Protocol (Babylon.js, TypeScript).
+//       - Spearheaded web3 initiatives by leading blockchain development and fostering partnerships (Solidity, Ethers).
+//       - Collaborated with UI/UX engineers for site redesigns and added livestreaming support, including HLS .m3u8 files.
+//       - Catalogued and resolved user-submitted issues, focusing on detailed bug tracking and resolution.
+
+//   - jobtitle: Lecturer
+//     company: National Science Foundation
+//     startdate: January 2020
+//     enddate: November 2021
+//     items:
+//       - Taught Python for Big Data to graduate students, enhancing their data analysis skills.
+//       - Developed curriculum in collaboration with universities, ensuring alignment with academic standards.
+//       - Mentored students through data science projects, fostering their professional growth and technical expertise.
+//       - Developed interactive data visualization lessons, helping students understand and implement visual analytics.
+//       - Mentorship was provided and projects included the analysis of household internet access, public-bike and scooter trends, and community event participation.
+//       - Research culminated in a final presentation of their findings in front of key city-stakeholders at a major annual event.
+
+//   - jobtitle: Web Developer
+//     company: Baltimore Neighborhood Indicators Association, Baltimore, MD
+//     startdate: January 2017
+//     enddate: November 2021
+//     items:
+//       - Generated 150 annual quality of life statistics used by Baltimore Citys agencies and non-profits, demonstrating data-driven decision-making.
+//       - Acted as data steward, implementing data management policies to enhance integrity and analytical capabilities.
+//       - Designed and administered the organizations main website, enhancing digital presence and user engagement (WordPress, PHP, SQL).
+//       - Developed tools for data visualization and analysis, including the Equity Tracker and Business Integration Search tool.
+//       - Engineered VitalSigns, generating core data for the organization, improving data accessibility.
+//       - Developed custom data visualizations using Plotly and Power BI for city-wide quality-of-life statistics, improving public data transparency.
+//       - Member of NNIP.
+//       - Writing python scripts to process geospatial data for interactive GIS maps and dashboards at the Baltimore Neighborhood Indicators Alliance.
+//       - Engineered VitalSigns, a tool that generates core data for the organization to improve data accessibility (Ipynb, GeoPandas, Seaborn, Vega, Plotly, MySQL, PostgreSQL).
+//       - Developed CloseCrawl, a system for pulling Maryland Courts data and filtering for foreclosures (Python, MechanicalSoup).
+//       - Created TidyAddr, a system for cleaning Baltimore City addresses (Node.js).
+
+//   - jobtitle: Contract Developer
+//     startdate: January 2009
+//     enddate: Present
+//     items:
+//       - Developed websites for law firms, art schools, cinemas, etc.
+//       - Green Patterns Map: A web-based map application for visualizing water usage and greening efforts in Baltimore, created through the EPA's Urban Waters Federal Partnership and the USDA Forest Service, with support from the Baltimore Office of Sustainability, the Department of Planning, U.S. Fish and Wildlife Service, and the National Fish and Wildlife Foundation (NFWF).
+//       - Engineered NEAR Library, receiving a grant to build a virtual library in the metaverse, demonstrating innovative thinking.
+//       - Developed Baltimore Open Land Data, a web-based tool that streamlines data collection and analysis for stakeholders in community redevelopment efforts.
+//       - Worked with the mayor's office of Baltimore City to create an Equity Tracker all city-based agencies use to track their progress.
+//       - Built a 'Business Integration Search Tool' which helps decision makers locate minority businesses in Baltimore City.
+//       - Built BOLD, a tool to search property records for studying foreclosure trends (React, PHP, SQL, Leaflet).
+//       - Engineered GreenPatterns, a system to identify greening strategies for reducing watershed runoff (React, PHP, SQL, Leaflet).
+      
+//   - jobtitle: Personal Projects
+//     startdate: January 2009
+//     enddate: Present
+//     items: 
+//       - Telegram Recap: An AI-driven tool to generate audio recaps that get posted back into chat.
+//       - GPT Watch: An Android Watch app I made for querying ChatGPT.
+//       - CryptoTrader: A algorithmic crypto trader I made that achieved 40x returns in one year.
+//       - [Langdrive GitHub](https://github.com/addy-ai/langdrive/tree/main/src)
+//       - [ipynb2web GitHub](https://github.com/karpatic/ipynb2web)
+//       - [ipynb2web](https://ipynb2web.com/docs/overview/getting-started)
+//       - Converts .IPYNB notebooks into web assets.
+//       - Website was built using this.
+//       - Written with **JSDoc** (typescript linter compatible).
+//       - [Langdrive Documentation](https://docs.langdrive.ai/docs/api/llmtools/chatbot)
+//       - [Addy Diagrams](https://observablehq.com/@karpatic/addy-diagrams)
+//       - [ResumeAI GitHub](https://github.com/karpatic/resumeAI)
+      
+// education:
+//   - degree: "MS in Information Systems"
+//     institution: "University of Maryland, Baltimore County"
+//   - degree: "BS in Information Systems"
+//     institution: "University of Maryland, Baltimore County"
+
+// awards:
+//   - "GitHub Open-Source Accelerator alumni (AddyAI, 2024)"
+//   - "Venture Bridge Alumni, Carnegie Mellon Accelerator (AddyAI, 2023)"
+  
+// tools: "HTML, CSS, JavaScript, TypeScript, Node.js, Python, SQL, NoSQL, PostgreSQL, MySQL, SQLite, Redis, Bash, PHP, Java, C++, React, Preact, Redux, Webpack, Grunt, Rollup, Cron, PM2, SSH, Docker, Docker-Compose, Nginx, HTTPS, SSL/TLS, LetsEncrypt, SystemD, Express, Passport, Apache, Flask, Git, GitHub, Heroku, Digital Ocean, AWS Lambda, AWS EC2, S3, Google Cloud Platform (GCP), Azure, Cloudflare, Firebase, FirebaseStorage, FirebaseRTDB, FireStore, NodeMailer, Stripe, Puppeteer, Termux, WordPress, OAuth2, Twilio, Jira, Esri, Socrata, Leaflet, PostGIS, GraphQL, D3.js, Babylon.js, Three.js, Pandoc, Matplotlib, Seaborn, Vega, Plotly, Altair, TensorFlow, ONNX, OpenAI, Gradio, Ollama, HuggingFace, Langchain, Numpy, Pandas, OpenSeas, Solidity, Ethers, Infura, Alchemy, Web3, CircleCI, Power BI, Tableau, Figma, Ionic, Tailwind, Styled Components, Bootstrap, GDPR, HTTP Live Streaming (HLS)"
+// ---
+// `;
+
+// window.bio = `
+// - Linkedin: https://www.linkedin.com/in/charles-karpati/
+// - Github: https://www.github.com/karpatic
+// - Email: charleskarpati@gmail.com
+// - Website: https://charleskarpati.com
+// - Portfolio: https://charleskarpati.com/
+// - Phone: +1 301 300 4728
+// - Spouse of or is Military Veteran: False
+// - Disabilities: None
+// - Residency: Washington D.C.
+// - Citizenships: United States of America and Hungary (European Union)
+
+// Name: Charles Karpati
+// Age: 30 
+// Gender: Male
+// Sexual Orientation: 
+// Email: Charles.karpati@gmail.com
+// City: Bethesda, Maryland, United States
+// State: Maryland
+// Phone: 301-300-4728
+// LinkedIn Profile: https://www.linkedin.com/in/charles-karpati/
+// Are you currently authorized to work in the U.S.? Yes
+// Do you now, or will you in the future, require immigration sponsorship to work? No.
+// Do you live with a disability? No.
+// Are you a veteran? No.
+// Ethnicities: Hispanic
+
+// Question Answers:
+
+// Are you legally authorized to work in the United States? Yes
+// Will you now or in the future require sponsorship for employment visa status (e.g. H-1B visa status)? No
+// Technology | Years Experience:
+// No, I am not a military veteran and do not have a spouse who is a military veteran.
+// No, I do not have a disability and I have never been diagnosed with a disability.
+// Citizenship: US Citizen
+// do you have an active clearance: No
+// Please name any and all Federal agencies, you have previously supported.: N/A
+// Target Salary: 100000
+// Do you have a valid driver's license? Yes 
+// What active clearance do you pocess? None - Public
+// If hired, when would you be able to start? Immediately
+// Citizen/Employment StatusCitizen/Employment Status : US Citizen
+// Do you have an active security clearance? No
+// Assume i was not refered by anyone.
+
+
+// Nobody I know or am related to work in any bank or financial institution nor military or government agency anywhere or at any point ever.
+
+// Safely assume that you can check no any form question asking if I have ever been employeed by the company or if I have any relatives or friends working there.
+
+// Safely assume I am ALWAYS comfortable driving to the office.
+
+// Additional Information:
+
+// Technology | Years Experience
+// Aws | 7
+// HTML | 15
+// CSS | 15
+// Javascript | 13
+// Python | 10 
+// C++ | 5 
+// SQL | 10
+// Git | 10
+// Java | 3
+// CSS | 5
+// React | 9
+// Node | 9
+// Redux | 5
+// MongoDB | 3
+// Express | 3
+// Django | 3
+// Flask | 10
+// AWS | 3
+// Heroku | 7
+// Docker | 5
+// Jira | 2
+// PostgreSQL | 9
+// MySQL | 9
+// SQLite | 9
+// Redis | 3
+// GraphQL | 5
+// Rest API | 10
+
+// I am Charles (Carlos) Karpati, 29 years old, Mexican Hungarian resident of Bethesda, Maryland. I have an MS in information systems from UMBC (May 2020). 
+
+// I have been coding since age 14 and have over a decade of software development experience. I hold a Master of Science in Information Systems from the University of Maryland, Baltimore County.
+// Post-graduation, I worked as a data scientist and full stack web developer for a University of Baltimore research institute where I contributed to over 95% of the project’s code. While there, I also served as the technical lead for a National Science Foundation (NSF) AI initiative, where I met my co-founder, Michael.
+
+// In my free time, I enjoy riding my electric unicycle and designing Bluetooth mesh light shows.
+
+// I am enthusiastic to grow in my career and to have teammates who help foster my development.
+// `; 
+
+// window.applicantmessage = `
+//   Do not include a Certifications, References, or Additional Information section.
+//   There should be at minimum 3 bullet points for AutoApply, Addy-Ai, Voxels, and the Baltimore Neighborhood Indicator Association.
+//   You must add at least 1 bullet point for the National Science Foundation.
+//   Include Freelance work if it is relevant to the job description. 
+//   Aim for three pages in length.
+// `
+
+//window.resumelatextemplate = "\n\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{longtable}\n\\usepackage{booktabs}\n\\title{Sample Document}\n\\author{Author Name}\n\\date{\\today}\n\n\\begin{document}\n\n\\maketitle\n\n$body$\n\n\\end{document}";
+

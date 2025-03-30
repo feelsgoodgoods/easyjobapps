@@ -1,0 +1,24 @@
+[
+  {
+    "payments": [
+      {
+        "status": "paid",
+        "total": 300,
+        "date": "2024-10-22T16:22:16.867Z",
+        "id": "pi_3QCkqZ02TlTFOTqc001wE8Qz",
+        "credits": 1016666.6666666667
+      }
+    ],
+    "username": "t",
+    "password": "$2b$10$w7R8kbOO99nmN2z85w5c5.WoDbZ9uR5Oam9FpssxyNBky0.iPAaCC",
+    "creditsBought": 1016666.6666666667,
+    "creditsUsed": 397889
+  },
+  {
+    "payments": [],
+    "creditsBought": 0,
+    "creditsUsed": 0,
+    "username": "test",
+    "password": "$2b$10$Aw5k7tTaRj7E9lcPIPYQp.xbcSW3/8I4Kq4xwycPvBcfeE1pfus7S"
+  }
+]

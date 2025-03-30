@@ -1,0 +1,50 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{parskip}
+\usepackage{hyperref}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\hypersetup{
+    colorlinks=true,
+    urlcolor=blue
+}
+\pagenumbering{gobble}
+
+\begin{document}
+
+\noindent Date: $date$ \\
+\vspace{0.5em}
+\noindent Recipient Name: $recipient_name$ \\
+\noindent Company Name: $company_name$ \\
+\noindent Address: $company_address$ \\
+\vspace{1em}
+
+\noindent Dear $recipient_name$,
+
+\vspace{1em}
+
+\noindent $introduction_paragraph$
+
+\vspace{1em}
+
+\noindent $first_body_paragraph$
+
+\vspace{1em}
+
+\noindent $second_body_paragraph$
+
+\vspace{1em}
+
+\noindent $final_paragraph$
+
+\vspace{1em}
+\noindent Thank you for your consideration.
+
+\vspace{1em}
+\noindent Sincerely, \\
+\vspace{1em}
+\noindent $your_name$ \\
+\noindent \href{mailto:$your_email$}{$your_email$} \\
+\noindent $your_phone$
+
+\end{document}

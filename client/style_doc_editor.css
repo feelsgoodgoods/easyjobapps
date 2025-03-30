@@ -1,0 +1,34 @@
+#documenteditor {
+	height: fit-content;
+	max-height: fill-available;
+	max-height: -webkit-fill-available;
+	overflow-y: auto;
+	max-width: 90%;
+
+	input[type="radio"] {
+		display: none !important;
+	}
+
+	#editoruploadtextcontainer, #editoruploadfilecontainer {
+		display: none;
+	}  
+
+	#resume-template-options, 
+	#coverletter-template-options {
+		visibility: hidden;
+		opacity: 0;
+		max-height: 0;
+		overflow: hidden;
+		transition: visibility 0s linear 0.2s, opacity 0.2s linear, height 0.2s linear, width 0.2s linear;
+	} 
+}
+
+#closedocumenteditor{ 
+	float: right;
+	background: gray; 
+	color: white;
+} 
+#closedocumenteditor:hover{
+	background: darkred !important; 
+	cursor: pointer;z
+}

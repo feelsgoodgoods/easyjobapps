@@ -1,0 +1,129 @@
+/* General styles */
+*{ scroll-margin-top: 10rem; }
+html,
+body,
+div, p, label, input {
+  font-size: 20px;
+}
+
+/* everything should have Helvetica */
+* {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+
+body[data-chrome-extension="true"] {
+	margin: 0px !important;  
+}  
+
+textarea {
+	width: fit-content;
+	width: -webkit-fill-available;
+	/* margin-right:1rem; */
+	height: 85px;
+	font-size: smaller;
+} 
+ 
+
+small{
+	font-size: smaller;
+}
+
+
+/*
+Buttons
+*/
+button {
+	font-size: 16px
+}
+
+.linkbtn {
+	background: inherit;
+	text-decoration: underline;
+	color: inherit;
+	border: none;
+	cursor: pointer;
+}  
+
+button.remove {
+    border-width: 0px;
+    background: rgb(150, 150, 150);
+    color: white; 
+    float: right; 
+    margin-right: 1rem;
+    border-radius: 3px;
+    transition: transform 0.2s; /*, box-shadow 0.2s;*/
+}
+
+button.remove:hover {
+    background: rgb(120, 120, 120);
+    cursor: pointer;
+    transform: translateY(1px);
+    /* box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.2); */
+}
+
+
+#back, #next, .styldbtn { 
+	/* background-color: #007bff; */
+	/* background-color: gray;
+	color: white;
+	border: none;
+	padding: 0.5rem 1rem;
+	font-size: 0.875rem;
+	cursor: pointer;
+	border-radius: 0.25rem; */
+	background-color: #28a745; /* Green color */
+	color: white;              /* White text */
+	font-size: 20px;           /* Larger font size */
+	width:100%;
+	max-width: 200px;               /* Full width */ 
+	padding: 0.5rem 1rem;      /* Spacious padding */
+	border: none;              /* Remove borders */
+	border-radius: 8px;        /* Rounded corners */
+	cursor: pointer;           /* Pointer cursor on hover */
+	box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+	transition: background-color 0.3s ease;
+}
+#back:hover, #next:hover {
+	background-color: #0056b3;
+	cursor: pointer;
+}
+.styldbtn{
+	background-color: #28a745;
+}
+.styldbtn:hover {
+	background-color: #218838;
+	cursor: pointer;
+}
+
+
+
+/*
+  Details
+*/
+@keyframes details-show {
+	from {
+		opacity: 0;
+		transform: var(--details-translate, translateY(-0.5em));
+	}
+}
+details[open]>*:not(summary) {
+	animation: details-show 150ms ease-in-out;
+}
+
+
+summary {
+    text-indent: -1em;
+    padding-left: .5em;
+    cursor: pointer;
+}
+summary:hover {
+    background: #f4f4f4;
+}
+summary::marker {
+    color: transparent;
+}
+summary::-webkit-details-marker {
+    color: transparent;
+}

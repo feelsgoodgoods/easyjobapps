@@ -1,0 +1,7 @@
+{
+    "watch": [".", "server", "shared"],
+    "ignore": ["client", "rsc"],
+    "ext": "js,jsx,ts,tsx,css,html",
+    "exec": "node index.js",
+    "delay": "2500"
+}
