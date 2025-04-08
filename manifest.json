@@ -26,8 +26,7 @@
       {
           "matches": ["<all_urls>"],
           "js": [ 
-            "client/components/content/content_molmo.js",
-            "shared/gpt_all_shared.js",
+            "client/components/content/content_molmo.js", 
             "client/components/content/content_getForms.js",
             "client/components/content/content_fillForms.js",
             "client/components/content.js",    

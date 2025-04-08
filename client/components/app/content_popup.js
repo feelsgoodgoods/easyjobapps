@@ -61,6 +61,7 @@ window.updateSW = async (key, value) => {
 }
 
 async function getChromeStorage(key) {
+  console.log('getChromeStorage: key', key)
   let exists = chrome?.storage?.local;
   if (exists) {
     return new Promise((resolve, reject) => {
@@ -72,14 +73,14 @@ async function getChromeStorage(key) {
         }
       });
     });
-  } else {
-    console.log('RETURNING LOCAL STORAGE:', key);
+  } else { 
     let lsVal = localStorage.getItem(key);
     return !lsVal ? null : JSON.parse(lsVal);
   }
 }
 
 async function setChromeStorage(key, val) { 
+  console.log('setChromeStorage: key, val', key, val)
   let exists = chrome?.storage?.local;
   if (exists) {
     return new Promise((resolve, reject) => {
@@ -91,8 +92,7 @@ async function setChromeStorage(key, val) {
         }
       });
     });
-  } else {
-    console.log('SET LOCAL STORAGE:', key, val);
+  } else { 
     localStorage.setItem(key, JSON.stringify(val));
   }
 } 

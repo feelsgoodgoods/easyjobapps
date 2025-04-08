@@ -4,6 +4,7 @@ import { route, showToast } from '../../../router.js';
 import { Popover } from '../App_Popover.js';
 
 function AccountBio({ userData, setUserData }) {
+  console.log('AccountBio: userData.bio', userData.bio); 
   const defaultBio = `
 First Name:
 Middle Name:
@@ -47,16 +48,10 @@ Anything else we should know?:
   }, [userData]);
 
   const handleInputChange = useCallback(
-    throttle(async (e) => {
-      console.log('userData', userData);
-      const { name, value } = e.target;
-      let tmp = userData?.bio
-      if(!tmp[0]){ tmp[0] = {} }
-      tmp[0].text = value 
-      // let val = JSON.stringify(tmp); 
-      const updatedFormData = { ...userData, [name]: tmp }; 
-
-      await route({ [name]: value }, "/userinfo_update_single", "bio"); 
+    throttle(async (e) => { 
+      const { name, value } = e.target;  
+      let resp = await route({ bio: value }, "/userinfo_update_single", "bio");  
+      const updatedFormData = { ...userData, bio: resp };  // id, label, text 
       setUserData(updatedFormData);
     }, 500),
     [userData]

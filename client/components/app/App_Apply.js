@@ -25,7 +25,7 @@ function Apply({ showToast, postData, setPostData, userData, setUserData }) {
   // Create the state:pdfUrl's using ls:PdfContent.
   const processPdfContent = (contentKey, callback) => {
     const savedContent = postData[contentKey]
-    console.log('processPdfContent', { savedContent, postData })
+    // console.log('processPdfContent', contentKey, { savedContent, postData })
     if (savedContent) {
       const byteCharacters = atob(savedContent.split(',')[1])
       const byteNumbers = new Array(byteCharacters.length)
@@ -202,9 +202,9 @@ function Apply({ showToast, postData, setPostData, userData, setUserData }) {
       </div>
       <h3 id="alertsetup"></h3>
 
-      {process?.env?.WEBPACK_ENV == 'development' && (
+      {/* {process?.env?.WEBPACK_ENV == 'development' && (
         <button onClick={() => chrome.runtime.reload()}> Reset Apfp (Dev Only) </button> 
-            )}
+            )} */}
 
       <div>
         <input type="radio" name="posttab" id="reviewresume" checked={activeTab === 'resume'} onChange={() => setActiveTab('resume')} />

@@ -13,7 +13,7 @@ routeFns = Object.assign(routeFns, gpt);
 
 import {r_endpoint} from '../shared/endpoints.js';   
 
-console.log('Router:Loaded:', { routes });
+// console.log('Router:Loaded:', { routes });
 
 async function prepPost(event, fetchType) {
   let body = {};

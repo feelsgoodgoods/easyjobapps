@@ -11,7 +11,7 @@ import { jwtDecode } from 'jwt-decode'
 import { set } from 'lodash'
 import Tour from './app/App_Tour.js';
 
-console.log('App_Index.js') 
+// console.log('App_Index.js') 
 
 function App({user, post}) {
   const [tour, setTour] = useState(localStorage.getItem('tour'))
@@ -171,7 +171,7 @@ function App({user, post}) {
       window.postData = postData 
     }
     else{
-      console.log('SETTING PostData', postData)  
+      // console.log('SETTING PostData', postData)  
       if (window.getLS('username') == 'guest') {
         // localStorage.setItem('guest', JSON.stringify({ postData }))
       }

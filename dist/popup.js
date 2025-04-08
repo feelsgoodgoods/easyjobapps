@@ -52,7 +52,9 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 
 
 
-console.log('App_Index.js');
+
+// console.log('App_Index.js') 
+
 function App(_ref) {
   var user = _ref.user,
     post = _ref.post;
@@ -383,7 +385,7 @@ function App(_ref) {
       window.setChromeStorage('postData', postData);
       window.postData = postData;
     } else {
-      console.log('SETTING PostData', postData);
+      // console.log('SETTING PostData', postData)  
       if (window.getLS('username') == 'guest') {
         // localStorage.setItem('guest', JSON.stringify({ postData }))
       }
@@ -777,7 +779,6 @@ var end = function end() {
 // ls[ resume PdfBase64, _editLatex, updatePopover, postText 
 
 function Apply(_ref) {
-  var _process;
   var showToast = _ref.showToast,
     postData = _ref.postData,
     setPostData = _ref.setPostData,
@@ -803,10 +804,7 @@ function Apply(_ref) {
   // Create the state:pdfUrl's using ls:PdfContent.
   var processPdfContent = function processPdfContent(contentKey, callback) {
     var savedContent = postData[contentKey];
-    console.log('processPdfContent', {
-      savedContent: savedContent,
-      postData: postData
-    });
+    // console.log('processPdfContent', contentKey, { savedContent, postData })
     if (savedContent) {
       var byteCharacters = atob(savedContent.split(',')[1]);
       var byteNumbers = new Array(byteCharacters.length);
@@ -1087,11 +1085,7 @@ function Apply(_ref) {
     handleClearPost: handleClearPost
   })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("h3", {
     id: "alertsetup"
-  }), ((_process = ({"env":{"WEBPACK_ENV":"development"}})) === null || _process === void 0 || (_process = _process.env) === null || _process === void 0 ? void 0 : _process.WEBPACK_ENV) == 'development' && /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
-    onClick: function onClick() {
-      return chrome.runtime.reload();
-    }
-  }, " Reset Apfp (Dev Only) "), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("input", {
+  }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("input", {
     type: "radio",
     name: "posttab",
     id: "reviewresume",
@@ -1532,6 +1526,7 @@ function AccountBio(_ref) {
   var _userData$bio;
   var userData = _ref.userData,
     setUserData = _ref.setUserData;
+  console.log('AccountBio: userData.bio', userData.bio);
   var defaultBio = "\nFirst Name:\nMiddle Name:\nLast Name:\nEmail Address:\nPhone:\nCountry:\nState:\nCounty:\nCity:\nPostal Code:\nAddress Line 1:\nTax District:\nPreferred Location:\nAre you 18+?:\nAre you authorized to work in the US?:\nWill you need employer-based sponsorship?: \nLink 1:\nDo you have a disability?:\nDiversity Information:\nSelect the races you identify with:\nGender:\nMilitary Spouse:\nMilitary Status:\nProtected Veteran Status:\nAnything else we should know?:\n";
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)((userData === null || userData === void 0 || (_userData$bio = userData.bio) === null || _userData$bio === void 0 || (_userData$bio = _userData$bio[0]) === null || _userData$bio === void 0 ? void 0 : _userData$bio.text) || defaultBio),
     _useState2 = _slicedToArray(_useState, 2),
@@ -1557,24 +1552,22 @@ function AccountBio(_ref) {
   }, [userData]);
   var handleInputChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)((0,lodash__WEBPACK_IMPORTED_MODULE_1__.throttle)(/*#__PURE__*/function () {
     var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(e) {
-      var _e$target, name, value, tmp, updatedFormData;
+      var _e$target, name, value, resp, updatedFormData;
       return _regeneratorRuntime().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
-            console.log('userData', userData);
             _e$target = e.target, name = _e$target.name, value = _e$target.value;
-            tmp = userData === null || userData === void 0 ? void 0 : userData.bio;
-            if (!tmp[0]) {
-              tmp[0] = {};
-            }
-            tmp[0].text = value;
-            // let val = JSON.stringify(tmp); 
-            updatedFormData = _objectSpread(_objectSpread({}, userData), {}, _defineProperty({}, name, tmp));
-            _context.next = 8;
-            return (0,_router_js__WEBPACK_IMPORTED_MODULE_2__.route)(_defineProperty({}, name, value), "/userinfo_update_single", "bio");
-          case 8:
+            _context.next = 3;
+            return (0,_router_js__WEBPACK_IMPORTED_MODULE_2__.route)({
+              bio: value
+            }, "/userinfo_update_single", "bio");
+          case 3:
+            resp = _context.sent;
+            updatedFormData = _objectSpread(_objectSpread({}, userData), {}, {
+              bio: resp
+            }); // id, label, text 
             setUserData(updatedFormData);
-          case 9:
+          case 6:
           case "end":
             return _context.stop();
         }
@@ -3251,32 +3244,32 @@ var defaultS = {
   continuousMode: false
 };
 function SettingsTab(_ref) {
-  var _userData$applySettin, _settings, _settings2;
+  var _userData$applySettin;
   var userData = _ref.userData,
     setUserData = _ref.setUserData;
-  var settings = (_userData$applySettin = userData.applySettings) === null || _userData$applySettin === void 0 || (_userData$applySettin = _userData$applySettin[0]) === null || _userData$applySettin === void 0 ? void 0 : _userData$applySettin.text;
-  settings = settings && JSON.parse(settings) || {};
-  var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings.ignoreCompanyList || defaultS.ignoreCompanyList),
+  console.log('\n\n userData.applySettings', userData.applySettings);
+  var settings = ((_userData$applySettin = userData.applySettings) === null || _userData$applySettin === void 0 || (_userData$applySettin = _userData$applySettin[0]) === null || _userData$applySettin === void 0 ? void 0 : _userData$applySettin.text) || defaultS;
+  var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings === null || settings === void 0 ? void 0 : settings.ignoreCompanyList),
     _useState2 = _slicedToArray(_useState, 2),
     ignoreCompanyList = _useState2[0],
     setIgnoreCompanyList = _useState2[1];
-  var _useState3 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings.ignoreTitleList || defaultS.ignoreTitleList),
+  var _useState3 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings === null || settings === void 0 ? void 0 : settings.ignoreTitleList),
     _useState4 = _slicedToArray(_useState3, 2),
     ignoreTitleList = _useState4[0],
     setIgnoreTitleList = _useState4[1];
-  var _useState5 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings.messageToRecruiter || defaultS.messageToRecruiter),
+  var _useState5 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings === null || settings === void 0 ? void 0 : settings.messageToRecruiter),
     _useState6 = _slicedToArray(_useState5, 2),
     messageToRecruiter = _useState6[0],
     setMessageToRecruiter = _useState6[1];
-  var _useState7 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings.formFillingInstructions || defaultS.formFillingInstructions),
+  var _useState7 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(settings === null || settings === void 0 ? void 0 : settings.formFillingInstructions),
     _useState8 = _slicedToArray(_useState7, 2),
     formFillingInstructions = _useState8[0],
     setFormFillingInstructions = _useState8[1];
-  var _useState9 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!!((_settings = settings) !== null && _settings !== void 0 && _settings.messageRecruiter)),
+  var _useState9 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!!(settings !== null && settings !== void 0 && settings.messageRecruiter)),
     _useState10 = _slicedToArray(_useState9, 2),
     messageRecruiter = _useState10[0],
     setMessageRecruiter = _useState10[1];
-  var _useState11 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!!((_settings2 = settings) !== null && _settings2 !== void 0 && _settings2.continuousMode)),
+  var _useState11 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(!!(settings !== null && settings !== void 0 && settings.continuousMode)),
     _useState12 = _slicedToArray(_useState11, 2),
     continuousMode = _useState12[0],
     setContinuousMode = _useState12[1];
@@ -3298,7 +3291,7 @@ function SettingsTab(_ref) {
     setMessageRecruiterPopoverOpen = _useState20[1];
   var handleSave = /*#__PURE__*/function () {
     var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-      var applySettings, updatedUserData;
+      var applySettings, resp, updatedFormData;
       return _regeneratorRuntime().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
@@ -3310,16 +3303,22 @@ function SettingsTab(_ref) {
               formFillingInstructions: formFillingInstructions,
               continuousMode: continuousMode
             };
-            updatedUserData = _objectSpread(_objectSpread({}, userData), {}, {
-              applySettings: applySettings
-            });
-            _context.next = 4;
+            _context.next = 3;
             return (0,_router_js__WEBPACK_IMPORTED_MODULE_1__.route)({
-              'applysettings': JSON.stringify(applySettings)
+              applySettings: applySettings
             }, "/userinfo_update_single", "applysettings");
-          case 4:
-            setUserData(updatedUserData);
+          case 3:
+            _context.next = 5;
+            return (0,_router_js__WEBPACK_IMPORTED_MODULE_1__.route)({
+              'applysettings': applySettings
+            }, "/userinfo_update_single", "bio");
           case 5:
+            resp = _context.sent;
+            updatedFormData = _objectSpread(_objectSpread({}, userData), {}, {
+              applySettings: resp
+            }); // id, label, text 
+            setUserData(updatedFormData);
+          case 8:
           case "end":
             return _context.stop();
         }
@@ -4281,9 +4280,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 var routeFns = Object.assign({}, _shared_db_js__WEBPACK_IMPORTED_MODULE_1__.db);
 routeFns = Object.assign(routeFns, _shared_gpt_js__WEBPACK_IMPORTED_MODULE_2__.gpt);
 
-console.log('Router:Loaded:', {
-  routes: _shared_routes_js__WEBPACK_IMPORTED_MODULE_0__.routes
-});
+
+// console.log('Router:Loaded:', { routes });
 function prepPost(_x, _x2) {
   return _prepPost.apply(this, arguments);
 } // Appends window.userData[username, openaikey] to body
@@ -79344,10 +79342,10 @@ function r_endpoint() {
   var env = ({"WEBPACK_ENV":"development"});
   var webp = env === null || env === void 0 ? void 0 : env.WEBPACK_ENV;
   var node = env === null || env === void 0 ? void 0 : env.NODE_ENV;
-  console.log('port:', {
-    'Webpack_ENV:': webp,
-    'NODE_ENV:': node
-  });
+  // console.log('port:', {
+  //     'Webpack_ENV:': webp, 
+  //     'NODE_ENV:':node
+  // });
   // Webpack:3001 proxies to index.js:3002 
   // services/pm/ecosystem.config.js == staging or production 
   var url = "";
@@ -79402,9 +79400,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _db_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./db.js */ "./shared/db.js");
 /* harmony import */ var _gpt_call_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./gpt_call.js */ "./shared/gpt_call.js");
 /* harmony import */ var _endpoints_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./endpoints.js */ "./shared/endpoints.js");
-/* harmony import */ var _gpt_all_shared_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./gpt_all_shared.js */ "./shared/gpt_all_shared.js");
-var __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([_gpt_utils_js__WEBPACK_IMPORTED_MODULE_0__, _db_js__WEBPACK_IMPORTED_MODULE_1__, _gpt_call_js__WEBPACK_IMPORTED_MODULE_2__]);
-([_gpt_utils_js__WEBPACK_IMPORTED_MODULE_0__, _db_js__WEBPACK_IMPORTED_MODULE_1__, _gpt_call_js__WEBPACK_IMPORTED_MODULE_2__] = __webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);
+/* harmony import */ var _gpt_refine_yaml_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./gpt_refine_yaml.js */ "./shared/gpt_refine_yaml.js");
+var __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([_gpt_utils_js__WEBPACK_IMPORTED_MODULE_0__, _db_js__WEBPACK_IMPORTED_MODULE_1__, _gpt_call_js__WEBPACK_IMPORTED_MODULE_2__, _gpt_refine_yaml_js__WEBPACK_IMPORTED_MODULE_4__]);
+([_gpt_utils_js__WEBPACK_IMPORTED_MODULE_0__, _db_js__WEBPACK_IMPORTED_MODULE_1__, _gpt_call_js__WEBPACK_IMPORTED_MODULE_2__, _gpt_refine_yaml_js__WEBPACK_IMPORTED_MODULE_4__] = __webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
 function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
@@ -79766,7 +79764,7 @@ function _edit() {
             break;
           }
           _context4.next = 14;
-          return (0,_gpt_all_shared_js__WEBPACK_IMPORTED_MODULE_4__.refine_yaml)(body);
+          return (0,_gpt_refine_yaml_js__WEBPACK_IMPORTED_MODULE_4__["default"])(body);
         case 14:
           _returnThis = _context4.sent;
           console.groupEnd();
@@ -80239,7 +80237,7 @@ var gpt = {
   post_create: post_create,
   extracts_create_for_post: extracts_create_for_post,
   extract_create_for_post: extract_create_for_post,
-  refine_yaml: _gpt_all_shared_js__WEBPACK_IMPORTED_MODULE_4__.refine_yaml,
+  refine_yaml: _gpt_refine_yaml_js__WEBPACK_IMPORTED_MODULE_4__["default"],
   text_to_latex: text_to_latex,
   email_generate: email_generate,
   extension_post_create: extension_post_create,
@@ -80265,228 +80263,6 @@ var serverPrompts = {
 // }
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } });
-
-/***/ }),
-
-/***/ "./shared/gpt_all_shared.js":
-/*!**********************************!*\
-  !*** ./shared/gpt_all_shared.js ***!
-  \**********************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
-console.log('gpt all shared.js');
-function refine_yaml(_x) {
-  return _refine_yaml.apply(this, arguments);
-}
-function _refine_yaml() {
-  _refine_yaml = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(body) {
-    var type, companyid, postid, user_id, editorData, oaikey, _body$error, error, _body$invalidYAML, invalidYAML, resObj, covObj, docObj, fromdb, post, defaultBio, domain, cl, useCompressed, useExpanded, useAdvanced, instructions, templateContent, applicantText, resumeText, jobDescription, bio, system_message, user_messageOne, assistant_messageOne, prompt, assistant_messageResume, user_messageResume, assistant_messageTwo, user_messageTwo, assistant_messageThree, user_messageThree, assistant_messageFour, user_messageFour, assistant_messageFive, user_messageFive, message, yamlHeader, prefix, suffix;
-    return _regeneratorRuntime().wrap(function _callee$(_context) {
-      while (1) switch (_context.prev = _context.next) {
-        case 0:
-          type = body.type, companyid = body.companyid, postid = body.postid, user_id = body.user_id, editorData = body.editorData, oaikey = body.oaikey, _body$error = body.error, error = _body$error === void 0 ? false : _body$error, _body$invalidYAML = body.invalidYAML, invalidYAML = _body$invalidYAML === void 0 ? '' : _body$invalidYAML;
-          console.group('shared:gpt:refine_yaml:', type);
-
-          // Retrieve content from the params
-          resObj = editorData.resume;
-          covObj = editorData.coverletter;
-          docObj = type === 'resume' ? resObj : covObj; // console.log('REFINE YAML GIVEN', {docObj, resObj, covObj})
-          // Retrieve content from the database
-          _context.next = 7;
-          return db.getContent(body);
-        case 7:
-          fromdb = _context.sent;
-          post = fromdb.post, defaultBio = fromdb.defaultBio; // console.log('refine_yam RETRIEVED FROM DB', {fromdb});
-          // Retrieve the template
-          domain = r_endpoint();
-          cl = type === 'coverletter' ? '_cl' : '';
-          console.log('DOMAIN GOT:', domain);
-          _context.t0 = docObj.template === 'None' || docObj.template === 'Compressed';
-          if (!_context.t0) {
-            _context.next = 17;
-            break;
-          }
-          _context.next = 16;
-          return fetch("".concat(domain, "/compressed").concat(cl, ".txt")).then(function (response) {
-            return response.text();
-          });
-        case 16:
-          _context.t0 = _context.sent;
-        case 17:
-          useCompressed = _context.t0;
-          _context.t1 = docObj.template === 'Expanded';
-          if (!_context.t1) {
-            _context.next = 23;
-            break;
-          }
-          _context.next = 22;
-          return fetch("".concat(domain, "/expanded").concat(cl, ".txt")).then(function (response) {
-            return response.text();
-          });
-        case 22:
-          _context.t1 = _context.sent;
-        case 23:
-          useExpanded = _context.t1;
-          useAdvanced = docObj.template == 'Advanced' && docObj.latexText;
-          instructions = docObj.tailorText || '';
-          templateContent = useCompressed || useExpanded || useAdvanced;
-          applicantText = docObj.text;
-          resumeText = type != 'coverletter' ? false : resObj.text;
-          jobDescription = post === null || post === void 0 ? void 0 : post.text;
-          bio = defaultBio || ''; // Set up system and user messages for ChatGPT
-          // Set up system and user messages for ChatGPT
-          system_message = {
-            role: 'system',
-            content: "\n      You convert <ApplicantText> into YAML ".concat(type, "s using a Pandoc <LatexTemplate> to help inform you of the YAML structure.\n      <ProcessingInstructions>\n        The YAML must be valid and structured so that it may be used in a Pandoc YAML metadata block within an otherwise empty markdown (.md) file which will then be used to populate the <LatexTemplate>.\n        1. The YAML must start and end with \"---\".\n        2. It should be indented and formatted for direct use by Pandoc as metadata.\n        3. Only return valid YAML frontmatter \u2014 no additional text or markdown. \n  \n        Your output will be inserted into a markdown file and used in the following Pandoc command for PDF generation:\n        cmd = ['pandoc', md_filename, '--template', <LatexTemplate>]\n  \n        Strictly return valid YAML format that Pandoc can process.\n      </ProcessingInstructions>\n      You begin once the user gives you their <FinalInstructions>.\n      ")
-          };
-          user_messageOne = {
-            role: 'user',
-            content: "Here is my ".concat(type, ": <ApplicantText>").concat(applicantText, "</ApplicantText>")
-          };
-          assistant_messageOne = {
-            role: 'assistant',
-            content: "Thank you for providing the ".concat(type, " applicant text.")
-          }; // Send to ChatGPT for YAML generation
-          prompt = [system_message, user_messageOne, assistant_messageOne];
-          if (!!resumeText) {
-            assistant_messageResume = {
-              role: 'assistant',
-              content: "Please provide the resume text."
-            };
-            user_messageResume = {
-              role: 'user',
-              content: "<ResumeContent>".concat(resumeText, "</ResumeContent>")
-            };
-            prompt.push(assistant_messageResume, user_messageResume);
-          }
-          assistant_messageTwo = {
-            role: 'assistant',
-            content: "Please provide the job description."
-          };
-          user_messageTwo = {
-            role: 'user',
-            content: "<JobDescription>".concat("</JobDescription>")
-          };
-          assistant_messageThree = {
-            role: 'assistant',
-            content: "Got it. Now, please provide the applicant's bio."
-          };
-          user_messageThree = {
-            role: 'user',
-            content: "<ApplicantsBio>".concat(bio, "</ApplicantsBio>")
-          };
-          assistant_messageFour = {
-            role: 'assistant',
-            content: "Thank you! Finally, please provide the Pandoc template."
-          };
-          user_messageFour = {
-            role: 'user',
-            content: "<LatexTemplate>".concat(templateContent, "</LatexTemplate>")
-          };
-          assistant_messageFive = {
-            role: 'assistant',
-            content: "Fantastic, please provide the <FinalInstructions> for the YAML conversion to begin."
-          };
-          user_messageFive = {
-            role: 'user',
-            content: "<FinalInstructions>\n        - Do not confuse the job description as a part of the resume.\n        - Use the job applicants <ResumeText> as a reference, customizing it for the <JobDescription>.\n        - Retain the tone and writing style of the original <ResumeText>, and text where possible.\n        ".concat(instructions, "</FinalInstructions>")
-          }; // If there's an error, augment the prompt with error message and invalid YAML
-          if (error) {
-            system_message.content += "\n      The previous YAML submission resulted in a Pandoc processing error.\n      Error: ".concat(error, "\n  \n      Invalid YAML that caused the error:\n      ").concat(invalidYAML, "\n  \n      Please review the above invalid YAML and the error message to fix the issue, and provide a corrected version that is valid for Pandoc processing.\n      ");
-          }
-          prompt.push(assistant_messageTwo, user_messageTwo, assistant_messageThree, user_messageThree, assistant_messageFour, user_messageFour, assistant_messageFive, user_messageFive);
-          _context.next = 48;
-          return callChatGPT(prompt, 'gpt-4o-mini', 4096, false, true, user_id, oaikey);
-        case 48:
-          message = _context.sent;
-          if (message) {
-            _context.next = 51;
-            break;
-          }
-          return _context.abrupt("return", {
-            status: 'error',
-            message: 'Error Calling ChatGPT',
-            data: {
-              type: 'noGptKey',
-              error: 'This action requires ChatGPT. No credits or keys found. Please Login to buy credits.'
-            }
-          });
-        case 51:
-          console.log('refine_yaml:END', {
-            message: message
-          });
-          yamlHeader = message.trim(); //  resumeText, instructions, templateContent, applicantTex, bio, postDescription: post.text,
-          // console.log('SHARED: GENERATE RESUME WITH:', { templateContent });
-          // let isBrowserContext = typeof window !== 'undefined';
-          // if (isBrowserContext) {
-          //   console.log('Running in a browser context');
-          //   console.log({
-          //     type,
-          //     resumeText,
-          //     resObj
-          //   })
-          // }
-          // Strip any extra formatting around the YAML returned by ChatGPTprefix = '```'
-          prefix = false;
-          prefix = 'yaml';
-          if (yamlHeader.startsWith(prefix)) {
-            yamlHeader = yamlHeader.slice(prefix.length).trim();
-          }
-          prefix = '```';
-          if (yamlHeader.startsWith(prefix)) {
-            yamlHeader = yamlHeader.slice(prefix.length).trim();
-          }
-          prefix = 'yaml';
-          if (yamlHeader.startsWith(prefix)) {
-            yamlHeader = yamlHeader.slice(prefix.length).trim();
-          }
-          suffix = '```';
-          if (yamlHeader.endsWith(suffix)) {
-            yamlHeader = yamlHeader.slice(0, -suffix.length).trim();
-          }
-
-          // console.log('Generated YAML:', yamlHeader);
-          console.groupEnd();
-          return _context.abrupt("return", {
-            status: 'success',
-            data: {
-              type: type,
-              company_id: companyid,
-              post_id: postid,
-              yamlContent: yamlHeader
-            }
-          });
-        case 64:
-        case "end":
-          return _context.stop();
-      }
-    }, _callee);
-  }));
-  return _refine_yaml.apply(this, arguments);
-}
-console.log('gpt all shared.js:refine_yaml');
-
-// This protects node.js modules from breaking when loading this
-var isContentScript = typeof window != 'undefined';
-if (isContentScript) {
-  window.refine_yaml = refine_yaml;
-} else {
-  console.log('use refine_yaml as a module');
-  if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = {
-      refine_yaml: refine_yaml
-    };
-  }
-}
-
-// this will break content.js scripts as they are not modules
-// export { refine_yaml }
 
 /***/ }),
 
@@ -81448,6 +81224,258 @@ var dbutils = {
   getContent: getContent
 };
 
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } });
+
+/***/ }),
+
+/***/ "./shared/gpt_refine_yaml.js":
+/*!***********************************!*\
+  !*** ./shared/gpt_refine_yaml.js ***!
+  \***********************************/
+/***/ ((__webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _db_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./db.js */ "./shared/db.js");
+/* harmony import */ var _gpt_call_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./gpt_call.js */ "./shared/gpt_call.js");
+/* harmony import */ var _endpoints_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./endpoints.js */ "./shared/endpoints.js");
+var __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([_db_js__WEBPACK_IMPORTED_MODULE_0__, _gpt_call_js__WEBPACK_IMPORTED_MODULE_1__]);
+([_db_js__WEBPACK_IMPORTED_MODULE_0__, _gpt_call_js__WEBPACK_IMPORTED_MODULE_1__] = __webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+// console.log("gptroutes.js: Loaded"); 
+
+
+
+var generatePrompt = function generatePrompt(content) {
+  var type = content.type,
+    applicantText = content.applicantText,
+    resumeText = content.resumeText,
+    jobDescription = content.jobDescription,
+    bio = content.bio,
+    templateContent = content.templateContent,
+    instructions = content.instructions,
+    _content$error = content.error,
+    error = _content$error === void 0 ? false : _content$error,
+    _content$invalidYAML = content.invalidYAML,
+    invalidYAML = _content$invalidYAML === void 0 ? '' : _content$invalidYAML;
+
+  // Set up system and user messages for ChatGPT
+  var system_message = {
+    role: 'system',
+    content: "\n      You convert <ApplicantText> into YAML ".concat(type, "s using a Pandoc <LatexTemplate> to help inform you of the YAML structure.\n      <ProcessingInstructions>\n        The YAML must be valid and structured so that it may be used in a Pandoc YAML metadata block within an otherwise empty markdown (.md) file which will then be used to populate the <LatexTemplate>.\n        1. The YAML must start and end with \"---\".\n        2. It should be indented and formatted for direct use by Pandoc as metadata.\n        3. Only return valid YAML frontmatter \u2014 no additional text or markdown. \n  \n        Your output will be inserted into a markdown file and used in the following Pandoc command for PDF generation:\n        cmd = ['pandoc', md_filename, '--template', <LatexTemplate>]\n  \n        Strictly return valid YAML format that Pandoc can process.\n      </ProcessingInstructions>\n      You begin once the user gives you their <FinalInstructions>.\n      ")
+  };
+  var user_messageOne = {
+    role: 'user',
+    content: "Here is my ".concat(type, ": <ApplicantText>").concat(applicantText, "</ApplicantText>")
+  };
+  var assistant_messageOne = {
+    role: 'assistant',
+    content: "Thank you for providing the ".concat(type, " applicant text.")
+  };
+
+  // Send to ChatGPT for YAML generation
+  var prompt = [system_message, user_messageOne, assistant_messageOne];
+  if (!!resumeText) {
+    var assistant_messageResume = {
+      role: 'assistant',
+      content: "Please provide the resume text."
+    };
+    var user_messageResume = {
+      role: 'user',
+      content: "<ResumeContent>".concat(resumeText, "</ResumeContent>")
+    };
+    prompt.push(assistant_messageResume, user_messageResume);
+  }
+  var assistant_messageTwo = {
+    role: 'assistant',
+    content: "Please provide the job description."
+  };
+  var user_messageTwo = {
+    role: 'user',
+    content: "<JobDescription>".concat(jobDescription, "</JobDescription>")
+  };
+  var assistant_messageThree = {
+    role: 'assistant',
+    content: "Got it. Now, please provide the applicant's bio."
+  };
+  var user_messageThree = {
+    role: 'user',
+    content: "<ApplicantsBio>".concat(bio, "</ApplicantsBio>")
+  };
+  var assistant_messageFour = {
+    role: 'assistant',
+    content: "Thank you! Finally, please provide the Pandoc template."
+  };
+  var user_messageFour = {
+    role: 'user',
+    content: "<LatexTemplate>".concat(templateContent, "</LatexTemplate>")
+  };
+  var assistant_messageFive = {
+    role: 'assistant',
+    content: "Fantastic, please provide the <FinalInstructions> for the YAML conversion to begin."
+  };
+  var user_messageFive = {
+    role: 'user',
+    content: "<FinalInstructions>\n        - Do not confuse the job description as a part of the resume.\n        - Use the job applicants <ResumeText> as a reference, customizing it for the <JobDescription>.\n        - Retain the tone and writing style of the original <ResumeText>, and text where possible.\n        ".concat(instructions, "</FinalInstructions>")
+  };
+
+  // If there's an error, augment the prompt with error message and invalid YAML
+  if (error) {
+    system_message.content += "\n      The previous YAML submission resulted in a Pandoc processing error.\n      Error: ".concat(error, "\n  \n      Invalid YAML that caused the error:\n      ").concat(invalidYAML, "\n  \n      Please review the above invalid YAML and the error message to fix the issue, and provide a corrected version that is valid for Pandoc processing.\n      ");
+  }
+  prompt.push(assistant_messageTwo, user_messageTwo, assistant_messageThree, user_messageThree, assistant_messageFour, user_messageFour, assistant_messageFive, user_messageFive);
+  return prompt;
+};
+function refine_yaml(_x) {
+  return _refine_yaml.apply(this, arguments);
+}
+function _refine_yaml() {
+  _refine_yaml = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(body) {
+    var type, companyid, postid, user_id, editorData, oaikey, _body$error, error, _body$invalidYAML, invalidYAML, resObj, covObj, docObj, fromdb, post, defaultBio, domain, cl, useCompressed, useExpanded, useAdvanced, instructions, templateContent, applicantText, resumeText, jobDescription, bio, content, prompt, message, yamlHeader, prefix, suffix;
+    return _regeneratorRuntime().wrap(function _callee$(_context) {
+      while (1) switch (_context.prev = _context.next) {
+        case 0:
+          type = body.type, companyid = body.companyid, postid = body.postid, user_id = body.user_id, editorData = body.editorData, oaikey = body.oaikey, _body$error = body.error, error = _body$error === void 0 ? false : _body$error, _body$invalidYAML = body.invalidYAML, invalidYAML = _body$invalidYAML === void 0 ? '' : _body$invalidYAML;
+          console.group('shared:gpt:refine_yaml:', type);
+
+          // Retrieve content from the params
+          resObj = editorData.resume;
+          covObj = editorData.coverletter;
+          docObj = type === 'resume' ? resObj : covObj; // Retrieve content from the database
+          _context.next = 7;
+          return _db_js__WEBPACK_IMPORTED_MODULE_0__.db.getContent(body);
+        case 7:
+          fromdb = _context.sent;
+          post = fromdb.post, defaultBio = fromdb.defaultBio; // Retrieve the template
+          domain = (0,_endpoints_js__WEBPACK_IMPORTED_MODULE_2__.r_endpoint)();
+          cl = type === 'coverletter' ? '_cl' : '';
+          _context.t0 = docObj.template === 'None' || docObj.template === 'Compressed';
+          if (!_context.t0) {
+            _context.next = 16;
+            break;
+          }
+          _context.next = 15;
+          return fetch("".concat(domain, "/compressed").concat(cl, ".txt")).then(function (response) {
+            return response.text();
+          });
+        case 15:
+          _context.t0 = _context.sent;
+        case 16:
+          useCompressed = _context.t0;
+          _context.t1 = docObj.template === 'Expanded';
+          if (!_context.t1) {
+            _context.next = 22;
+            break;
+          }
+          _context.next = 21;
+          return fetch("".concat(domain, "/expanded").concat(cl, ".txt")).then(function (response) {
+            return response.text();
+          });
+        case 21:
+          _context.t1 = _context.sent;
+        case 22:
+          useExpanded = _context.t1;
+          useAdvanced = docObj.template == 'Advanced' && docObj.latexText; // Get Content
+          instructions = docObj.tailorText || '';
+          templateContent = useCompressed || useExpanded || useAdvanced;
+          applicantText = docObj.text;
+          resumeText = type != 'coverletter' ? false : resObj.text;
+          jobDescription = (post === null || post === void 0 ? void 0 : post.text) || '';
+          bio = defaultBio || '';
+          content = {
+            type: type,
+            applicantText: applicantText,
+            resumeText: resumeText,
+            jobDescription: jobDescription,
+            bio: bio,
+            templateContent: templateContent,
+            instructions: instructions,
+            error: error,
+            invalidYAML: invalidYAML
+          };
+          console.table(content);
+          prompt = generatePrompt(content);
+          _context.next = 35;
+          return (0,_gpt_call_js__WEBPACK_IMPORTED_MODULE_1__.callChatGPT)(prompt, 'gpt-4o-mini', 4096, false, true, user_id, oaikey);
+        case 35:
+          message = _context.sent;
+          if (message) {
+            _context.next = 38;
+            break;
+          }
+          return _context.abrupt("return", {
+            status: 'error',
+            message: 'Error Calling ChatGPT',
+            data: {
+              type: 'noGptKey',
+              error: 'This action requires ChatGPT. No credits or keys found. Please Login to buy credits.'
+            }
+          });
+        case 38:
+          console.log('refine_yaml:END', {
+            message: message
+          });
+          yamlHeader = message.trim();
+          if (yamlHeader) {
+            // Strip any extra formatting around the YAML returned by ChatGPTprefix = '```'
+            prefix = false;
+            prefix = 'yaml';
+            if (yamlHeader.startsWith(prefix)) {
+              yamlHeader = yamlHeader.slice(prefix.length).trim();
+            }
+            prefix = '```';
+            if (yamlHeader.startsWith(prefix)) {
+              yamlHeader = yamlHeader.slice(prefix.length).trim();
+            }
+            prefix = 'yaml';
+            if (yamlHeader.startsWith(prefix)) {
+              yamlHeader = yamlHeader.slice(prefix.length).trim();
+            }
+            suffix = '```';
+            if (yamlHeader.endsWith(suffix)) {
+              yamlHeader = yamlHeader.slice(0, -suffix.length).trim();
+            }
+          }
+          // console.log('Generated YAML:', yamlHeader);
+          console.groupEnd();
+          return _context.abrupt("return", {
+            status: 'success',
+            data: {
+              type: type,
+              company_id: companyid,
+              post_id: postid,
+              yamlContent: yamlHeader
+            }
+          });
+        case 43:
+        case "end":
+          return _context.stop();
+      }
+    }, _callee);
+  }));
+  return _refine_yaml.apply(this, arguments);
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (refine_yaml);
+
+//  resumeText, instructions, templateContent, applicantTex, bio, postDescription: post.text,
+// console.log('SHARED: GENERATE RESUME WITH:', { templateContent });
+// let isBrowserContext = typeof window !== 'undefined';
+// if (isBrowserContext) {
+//   console.log('Running in a browser context');
+//   console.log({
+//     type,
+//     resumeText,
+//     resObj
+//   })
+// }
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } });
 
@@ -82669,7 +82697,7 @@ var routes = [{
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("2ac0e04ffe0effb21d7e")
+/******/ 		__webpack_require__.h = () => ("045250397215dfa33dda")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */

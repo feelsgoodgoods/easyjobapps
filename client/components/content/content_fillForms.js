@@ -365,81 +365,188 @@ const getTemplate = async (editor) => {
   return template
 }
 
-async function refin_yaml(givenText = false, error = false, invalidYAML = '') { 
-  const resEditor = window.editorData?.resume   
-  console.log('\n\n Content:Fillforms:Refine Yaml:') 
- 
-  const instructions = resEditor?.tailorText || ''  
-  const template = await getTemplate(resEditor)
-  const resumetext = resEditor.text
-  const bio = window.userData?.bio?.[0]?.text || ''
-  const text = window.jobPost?.text
-  // console.table({type: typeof(text), jobPostText:text}) 
-  const jobdescription = text == 'string' ? text : JSON.stringify(text)
-
-  console.table( {
-    instructions,  
-    template, 
-    resumetext,
+// used by refine_yaml
+const generatePrompt = (content) => {
+  let {
+    type,
+    applicantText,
+    resumeText,
+    jobDescription,
     bio,
-    jobdescription
-  })  
-
-  // Set up the system and user messages for the AI
+    templateContent,
+    instructions, 
+    error = false,
+    invalidYAML = ''
+  } = content;
+ 
+  // Set up system and user messages for ChatGPT
   let system_message = {
     role: 'system',
     content: `
-    <Instructions>
-      You assist in generating resumes in YAML format. 
-      
-      You already have the <ApplicantsBio> and <ResumeText> and the applicant will give you a new <JobDescription> to work off of and a special <ApplicantMessageToYOU>.
+      You convert job <ApplicantText> into a valid YAML ${type} using a Pandoc <LatexTemplate> they provide to help inform you of the YAML structure. 
+      <ProcessingInstructions>
+        The YAML must be valid and structured so that it may be used in a Pandoc YAML metadata block within an otherwise empty markdown (.md) file which will then be used to populate the <LatexTemplate>.
+        1. The YAML must start and end with "---".
+        2. It should be indented and formatted for direct use by Pandoc as metadata.
+        3. Only return valid YAML frontmatter — no additional text or markdown. 
   
-      The YAML must be valid and structured for a Pandoc YAML metadata block within an otherwise empty markdown (.md) file to populate the <LatexTemplate>.
+        Your output will be inserted into a markdown file and used in the following Pandoc command for PDF generation:
+        cmd = ['pandoc', md_filename, '--template', <LatexTemplate>]
   
-      Guidelines:
-      1. The YAML must start and end with "---".
-      2. It should be indented and formatted for direct use by Pandoc as metadata.
-      3. Only return valid YAML frontmatter — no additional text or markdown.
-
-      Processing Instructions:
-      ${instructions}
-  
-      Your output will be inserted into a markdown file and used in the following Pandoc command for PDF generation:
-      cmd = ['pandoc', md_filename, '--template', <LatexTemplate>]
-  
-      Strictly return valid YAML format that Pandoc can process.
-    </Instructions>
-    <LatexTemplate>${template}</LatexTemplate>
-    <ResumeText>${resumetext}</ResumeText>
-    <ApplicantsBio>${bio}</ApplicantsBio>
-    `,
+        Strictly return valid YAML format that Pandoc can process.
+      </ProcessingInstructions>
+      The user may want you to tailor their ${type}  for a specific <JobDescription> they are applying for.
+      Before you begin ask for the <ApplicantsBio> ${!!resumeText && ', <ResumeText>'}, a <JobDescription> for which the applicant is applying to, and <FinalInstructions>.
+      Do not confuse the <JobDescription> that they are applying to as a part of their work experience.
+      `,
   }
 
-  let user_message = {
+  let user_messageOne = {
     role: 'user',
-    content: `
-    <JobDescription>${jobdescription}</JobDescription>  
-    `,
-  } 
+    content: `I am applying for a job. Here is my ${type}: <ApplicantText>${applicantText}</ApplicantText>`,
+  }
 
-  // If there's an error, augment the prompt to AI with the error message and invalid YAML
-  if (error) {
-    system_message.content += `
-    The previous YAML submission resulted in a Pandoc processing error.
-    Error: ${error}
-
-    Invalid YAML that caused the error:
-    ${invalidYAML}
-
-    Please review the above invalid YAML and the error message to fix the issue, and provide a corrected version that is valid for Pandoc processing.
-    `
+  let assistant_messageOne = {
+    role: 'assistant',
+    content: `Thank you for providing your ${type}.`,
   }
 
   // Send to ChatGPT for YAML generation
-  let post = [system_message, user_message]
+  let prompt = [system_message, user_messageOne, assistant_messageOne]
+
+  if (!!resumeText) {
+    let assistant_messageResume = {
+      role: 'assistant',
+      content: `Please provide your resume, if available.`,
+    }
+    let user_messageResume = {
+      role: 'user',
+      content: `<ResumeContent>${resumeText}</ResumeContent>`,
+    }
+
+    prompt.push(assistant_messageResume, user_messageResume)
+  }
+
+  let assistant_messageTwo = {
+    role: 'assistant',
+    content: `If you are applying to a specific job, please provide any information about it, if available.`,
+  }
+
+  let user_messageTwo = {
+    role: 'user',
+    content: `${jobDescription&&'Here is information I was able to gather about the job I am applying for: '}<JobDescription>${jobDescription}</JobDescription>`,
+  }
+
+  let assistant_messageThree = {
+    role: 'assistant',
+    content: `Thank you. 
+    I understand the job description is for a job you want to apply to and not a job you currently have. 
+    I will consider the JobDescription when drafting the final output. 
+    Now, please provide the applicant's bio which I may use, to further help.`,
+  }
+
+  let user_messageThree = {
+    role: 'user',
+    content: `${bio&&'Here is more information about myself if that helps:'}<ApplicantsBio>${bio}</ApplicantsBio>`,
+  }
+
+  let assistant_messageFour = {
+    role: 'assistant',
+    content: `Thank you! Finally, please provide the Pandoc template you want me to use.`,
+  }
+
+  let user_messageFour = {
+    role: 'user',
+    content: `<LatexTemplate>${templateContent}</LatexTemplate>`,
+  }
+
+  let assistant_messageFive = {
+    role: 'assistant',
+    content: `Fantastic, please provide the <FinalInstructions> for the YAML conversion to begin.`,
+  }
+
+  let user_messageFive = {
+    role: 'user',
+    content: `<FinalInstructions>
+        - Do not confuse the job description as a part of the resume.
+        - Use the <ApplicantText> as the foundation for your response using the <JobDescription> to help inform your response.
+        - Retain the tone and writing style of the original <ResumeText>, and text where possible.
+        ${instructions}</FinalInstructions>`,
+  }
+
+  // If there's an error, augment the prompt with error message and invalid YAML
+  if (error) {
+    system_message.content += `
+      The previous YAML submission resulted in a Pandoc processing error.
+      Error: ${error}
+  
+      Invalid YAML that caused the error:
+      ${invalidYAML}
+  
+      Please review the above invalid YAML and the error message to fix the issue, and provide a corrected version that is valid for Pandoc processing.
+      `
+  }
+
+  prompt.push(assistant_messageTwo, user_messageTwo, assistant_messageThree, user_messageThree, assistant_messageFour, user_messageFour, assistant_messageFive, user_messageFive)
+ 
+  return prompt 
+}
+  
+async function refine_yaml(body) {
+  const { type, givenText = false, error = false, invalidYAML = '' } = body 
+  console.group('\n\n Content:Refine Yaml:') 
+
+  // console.log({ 
+  //   jobPost: window.jobPost, // .text = {jobDescription, jobDetails, applicantCount, ... } 
+  //   applySettings: window.applySettings, // false
+  //   postData: window.postData, // false  
+  //   editorData: window.editorData, // .resume = {id, title, text, file, latexText, tailorText, template }
+  //   userData: window.userData, // .resumes[0] = {id, label, text: {id, title, text, file, latexText, tailorText, template } } 
+  // })
+
+  // Retrieve 
+  const jobPostText = window.jobPost?.text || ''
+ 
+  // Retrieve content from window
+  const resObj = window.editorData?.resume || JSON.parse(window.userData?.resumes?.[0]?.text || '{}') 
+  const covObj = window.editorData?.coverletter || JSON.parse(window.userData?.resumes?.[0]?.text || '{}') 
+  const docObj = type === 'resume' ? resObj : covObj  
+
+  // Get Content 
+  const instructions = docObj?.tailorText || ''   
+  const templateContent = await getTemplate(resObj)
+  const applicantText = docObj?.text; 
+  const resumeText = type != 'coverletter' ? false : resObj.text  
+  const jobDescription = (typeof jobPostText == 'string') ? jobPostText : JSON.stringify(jobPostText)
+  const bio = window.userData?.bio?.[0]?.text || ''
+
+  // console.table(
+  //   {
+  //     resObj,
+  //     covObj,
+  //     docObj,
+  //   }
+  // )
+  let content = {
+    type,
+    applicantText,
+    resumeText,
+    jobDescription,
+    bio, 
+    templateContent,
+    instructions,
+    error,
+    invalidYAML 
+  }
+  console.table( content )  
+  console.groupEnd()
+ 
+  let post = generatePrompt( content )
+
   const message = givenText || (await callChatGPT(post, 'gpt-4o-mini', 4096, false, true)) 
   if (typeof message === 'object' && message.error) { return message }
-  let yamlHeader = message.trim()
+  
+  let yamlHeader = message.trim() 
   if(yamlHeader){
     // Strip any extra formatting around the YAML returned by ChatGPTprefix = '```'
     let prefix = false
@@ -461,6 +568,10 @@ async function refin_yaml(givenText = false, error = false, invalidYAML = '') {
       yamlHeader = yamlHeader.slice(0, -suffix.length).trim()
     }
   }
+
+  // console.group('Refine Yaml:END')
+  // console.log('Refine Yaml:', { yamlHeader })
+  // console.groupEnd()
   return { yamlContent: yamlHeader }
 }
  
@@ -470,7 +581,7 @@ async function generateResume(givenText = false, error = false, invalidYAML = ''
   const activeTab = 'resume'
 
   let startTime = new Date().getTime() 
-  const resp_text = await refin_yaml(givenText) 
+  const resp_text = await refine_yaml({type:'resume', givenText}) 
   const yamlHeader = resp_text?.['yamlContent']  
   if (!yamlHeader) { console.log(`No ${activeTab} content received`, { resp_text }); return }  
   
@@ -480,7 +591,7 @@ async function generateResume(givenText = false, error = false, invalidYAML = ''
   // Log time
   let endTime = new Date().getTime()
   let lapseInSeconds = ((endTime - startTime) / 1000).toFixed(2)
-  console.log(`Operation took ${lapseInSeconds} seconds`, {yamlHeader})
+  console.log(`generateResume took ${lapseInSeconds} seconds`, {yamlHeader})
 
   // Send the YAML and LaTeX template to Pandoc for PDF generation
   const pandoc_url = window.devSettings.localPandoc ? 'http://127.0.0.1:4422/pandoc' : 'https://getfrom.net/pdf/pandoc'
@@ -542,116 +653,7 @@ async function generateResume(givenText = false, error = false, invalidYAML = ''
 
 async function generateCoverLetter(givenText = false) {
   console.log('Generate Cover Letter')
-  let resObj = JSON.parse(window.userData?.resumes?.[0]?.text || '{}')
-  let clObj = JSON.parse(window.userData?.coverletters?.[0]?.text || '{}')
-  givenText = givenText || window?.postData?.coverletterText
-  givenRes = window?.postData?.resumeText
-  let bio = window.userData?.bio?.[0]?.text || ''
-  let coverlettertext = givenText || clObj.text
-  let resumetext = givenRes || resObj.text
-  let instructions = window.applicantmessage
-  const domain = window.devSettings.localServer ? 'http://127.0.0.1:3002' : 'https://getfrom.net'
-  const templateName = clObj?.template
-  const useCompressed = (templateName == 'None' || templateName == 'Compressed') && (await fetchResource(`${domain}/compressed_cl.txt`).then((response) => response.text()))
-  const useExpanded = templateName == 'Expanded' && (await fetchResource(`${domain}/expanded_cl.txt`).then((response) => response.text()))
-  const useAdvanced = templateName == 'Advanced' && window.userData?.latexText
-  let template = useCompressed || useExpanded || useAdvanced
-  let jobdescription = window.jobPost
 
-  let system_message = {
-    role: 'system',
-    content: ` 
-    <Instructions>
-      You assist in generating cover letters in YAML format, provided with a <JobDescription>, <ApplicantsBio>, and <ResumeText>.
-      
-      The YAML must be valid and structured for a Pandoc YAML metadata block within an otherwise empty markdown (.md) file to populate the <LatexTemplate>.
-      
-      Guidelines:
-      1. The YAML must start and end with "---".
-      2. It should be indented and formatted for direct use by Pandoc as metadata.
-      3. Only return valid YAML frontmatter — no additional text or markdown.
-
-      Processing Instructions: 
-      ${instructions}
-      
-      Your output will be inserted into a markdown file and used in the following Pandoc command for PDF generation:
-      cmd = ['pandoc', md_filename, '--template', <LatexTemplate>]
-      
-      Strictly return valid YAML format that Pandoc can process.
-    </Instructions>
-    <LatexTemplate>${template}</LatexTemplate>
-    <ResumeText>${resumetext}</ResumeText>
-    <CoverLetterText>${coverlettertext}</CoverLetterText>
-    <ApplicantsBio>${bio}</ApplicantsBio>
-  `,
-  }
-  let today = new Date()
-  let user_message = {
-    role: 'user',
-    content: `
-    <TodaysDate>${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}</TodaysDate>
-    <JobDescription>${jobdescription}</JobDescription> 
-    `,
-  }
-
-  let post = [system_message, user_message]
-  const message = givenText || (await callChatGPT(post, 'gpt-4o-mini', 4096, false, true))
-  let coverletterText = message
-
-  // pass to pdflatex
-  let url = window.devSettings.localPandoc ? 'http://127.0.0.1:4422/pandoc' : 'https://getfrom.net/pdf/pandoc'
-  let prefix = '```'
-  if (coverletterText.startsWith(prefix)) {
-    coverletterText = coverletterText.slice(prefix.length).trim()
-  }
-  prefix = 'markdown'
-  if (coverletterText.startsWith(prefix)) {
-    coverletterText = coverletterText.slice(prefix.length).trim()
-  }
-  prefix = 'yaml'
-  if (coverletterText.startsWith(prefix)) {
-    coverletterText = coverletterText.slice(prefix.length).trim()
-  }
-  let suffix = '```'
-  if (coverletterText.endsWith(suffix)) {
-    coverletterText = coverletterText.slice(0, -suffix.length).trim()
-  }
-  const response = await fetchResource(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: coverletterText, //temptext,   // The YAML text
-      latex: template, // The LaTeX template
-    }),
-  })
-
-  if (!response.ok) {
-    console.log('ERROR GENERATING Cover Letter', { template })
-  }
-
-  // Retrieve the Blob (PDF content)
-  const blob = await response?.blob?.()
-  if (!blob) {
-    console.log('NO BLOB')
-    console.log(await response.json())
-    return false
-  }
-
-  // Save Blob to localStorage
-  const reader = new FileReader()
-  reader.readAsDataURL(blob)
-  reader.onloadend = function () {
-    const base64data = reader.result
-    // sendGenerated('coverletter', coverletterText, base64data)
-    localStorage.setItem('coverletterPdfBase64', base64data)
-
-    // create a hyperlink and click it to download the PDF
-    const a = document.createElement('a')
-    a.href = base64data
-    a.download = 'coverletter.pdf'
-    a.click()
-  }
-  return blob
 }
 
 function base64ToBlob(base64, contentType) {

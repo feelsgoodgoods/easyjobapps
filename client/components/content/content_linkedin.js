@@ -59,7 +59,7 @@ let continuousMode = async () => {
 let generatedResumePromise = null; 
 
 async function linkedinApply(){
-  console.log('linkedinApply')
+  // console.log('linkedinApply')
 
   let easyApplyButton = findEasyApplyButton(); 
   if(!easyApplyButton){ 
@@ -71,12 +71,11 @@ async function linkedinApply(){
   let applications = JSON.parse(localStorage.getItem(storageKey) || '[]');
 
   // console.clear();
-  console.log('Applying with', {userData: window.userData})
+  // console.log('Applying with', {userData: window.userData})
   await delay(500); 
 
   const postText = window.postData?.text 
   window.jobPost = await window.getPost() 
-  console.log('GET POST FOUND', typeof(window.jobPost), window.jobPost)
   if(!jobPost){
     window.toggleStatusNotification(true, 'ERROR.');
     return
@@ -252,7 +251,7 @@ async function easyApply(){
       }
     }
     catch(e){
-      console.log('Unknown issue.', e);
+      console.log('Content_Linkedin: Unknown issue.', e);
       checkForErrors();
       delay(10000);
       return false
@@ -269,12 +268,20 @@ let formFields = await getFormInputsAndDropdowns();
   const unmatchedFields = [];
   
   formFields.forEach(field => {
-    const storedField = storedFields.find(stored => 
-      stored.label === field.label && 
-      stored.type === field.type &&
-      (!stored.instructions || !field.instructions || 
-       stored.instructions === field.instructions)
-    );
+    const storedField = storedFields.find(stored => {
+      let matching = stored.label === field.label // Same Question
+      matching &&= stored.type === field.type // Same Input Type
+      matching &&= (!stored.instructions || !field.instructions || stored.instructions === field.instructions)  // No special instructions
+
+      // if type is radio or checkbox, check if the options are the same (compare labels)
+      if (stored.options && field.options) { 
+        const storedOptions = stored.options.map(option => option.label).sort();
+        const fieldOptions = field.options.map(option => option.label).sort();
+        matching &&= JSON.stringify(storedOptions) === JSON.stringify(fieldOptions); // Same Options
+      }
+      return matching;
+
+    });
 
     if (storedField) {
       matchedFields.push({
@@ -292,6 +299,9 @@ let formFields = await getFormInputsAndDropdowns();
   if (unmatchedFields.length > 0) {
     console.log('Unmatched Fields:', unmatchedFields);
     chatGPTFields = await processFormLinkedIn(unmatchedFields);
+  }
+  if(matchedFields.length > 0){
+    console.log('Matched Fields:', matchedFields);
   }
 
   // Combine matched and new fields, maintaining order
@@ -332,12 +342,12 @@ let formFields = await getFormInputsAndDropdowns();
           storedFields.push(newField);
         }
       });
-      localStorage.setItem(lsval, JSON.stringify(storedFields));
-      console.log('Total unique form fields:', storedFields, storedFields.length);
+      localStorage.setItem(lsval, JSON.stringify(storedFields)); 
 
   }
 
   console.log('STRIKES:', window.strikes);
+  console.log('Total unique form fields:', storedFields, storedFields.length);
   
   window.toggleStatusNotification(true, 'Filling Form..')
   await delay(1000);

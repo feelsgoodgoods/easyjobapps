@@ -2,10 +2,10 @@ function r_endpoint() {
     let env = process.env
     let webp = env?.WEBPACK_ENV
     let node = env?.NODE_ENV
-    console.log('port:', {
-        'Webpack_ENV:': webp, 
-        'NODE_ENV:':node
-    });
+    // console.log('port:', {
+    //     'Webpack_ENV:': webp, 
+    //     'NODE_ENV:':node
+    // });
     // Webpack:3001 proxies to index.js:3002 
     // services/pm/ecosystem.config.js == staging or production 
     let url = ""; 

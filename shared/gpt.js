@@ -2,8 +2,8 @@
 import { gptutils } from './gpt_utils.js'
 import { db } from './db.js'
 import { callChatGPT } from './gpt_call.js'
-import {r_endpoint} from './endpoints.js' 
-import { refine_yaml } from './gpt_all_shared.js'
+import { r_endpoint } from './endpoints.js' 
+import refine_yaml from './gpt_refine_yaml.js'
 
 //
 //

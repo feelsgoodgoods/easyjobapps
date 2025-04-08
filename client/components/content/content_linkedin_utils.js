@@ -17,7 +17,7 @@ let scrollSidebar = async () => {
     element.scrollTop = element.scrollTop == 0 ? element.scrollHeight : 0
     wait = await delay(1000)
   } else {
-    console.warn('.jobs-search-results-list element not found')
+    console.log('.jobs-search-results-list element not found')
   }
   return true
 }
@@ -135,19 +135,33 @@ async function handleDropdownInput(field, questionContainer) {
 }
 
 async function handleRadioInput(field, questionContainer) {
-  console.log('fillFor -> handleRadioInput', {field, options: field.options, questionContainer})
-  field.options.map((option) => {
-    let radio = questionContainer.querySelector(`input[type="radio"][value="${option.value}"]`)
-    // console.log('fillFor -> handleRadioInput -> handle radio', option)
-    // first log all radio and values
-    if (radio && option.checked) {
+  console.group('\n\n handleRadioInput') 
+  field.options.map(async (option) => {
+    let scrapedLabel = option.label.replace(/\s/g, '').trim().toLowerCase() 
+    let inspectedLabelText = []
+    let labels = questionContainer.querySelectorAll(`label`) 
+    let label = Array.from(labels).find((label) =>{ 
+      let inspectingLabel = label.textContent.replace(/\s/g, '').trim().toLowerCase() 
+      // removes whitespaces, newlines, and tabs from both sides of the string
+      let match = scrapedLabel == inspectingLabel
+      inspectedLabelText.push(inspectingLabel)
+      // console.log('label', { label, field, option, match })
+      return match
+    })  
+    // console.log('inspectedLabelText', !!label, { labelTexts, optionLabel })
+    if (!label) {
+      console.error('Label not found', { scrapedLabel, option, inspectedLabelText }) 
+      await delay(100000)
+      return
+    }
+    let radio = label?.closest('div').querySelector(`input[type="radio"]`) 
+    if (radio) { 
       radio.checked = option.checked
       radio.dispatchEvent(new Event('change', { bubbles: true }))
-    } else {
-      console.warn('Radio input not found', { value: field.value })
-    }
+    } else { console.warn('Radio input not found', { value: field.value }) }
   })
-  await delay(50000)
+  console.groupEnd()
+  // await delay(600000)
 }
 
 async function handleCheckboxGroupInput(field, questionContainer) {
@@ -294,14 +308,14 @@ async function handleTextInput(field, questionContainer) {
       // Trigger the change event after selecting the option
       input.dispatchEvent(new Event('change', { bubbles: true }))
 
-      console.log('Set text value with dynamic interaction', { value: field.value })
+      // console.log('Set text value with dynamic interaction', { value: field.value })
     } else {
       // Handle the standard text input case
       input.value = field.value
       input.dispatchEvent(new Event('input', { bubbles: true }))
       input.dispatchEvent(new Event('change', { bubbles: true }))
 
-      console.log('Set text value', {value: field.value })
+      // console.log('Set text value', {value: field.value })
     }
   } else {
     console.warn('Text input not found')
@@ -554,7 +568,7 @@ async function processFormLinkedIn(formFields) {
   let resObj = JSON.parse(window.userData?.resumes?.[0]?.text || '{}')
   let bio = window.userData?.bio?.[0]?.text || ''
   let instructions = window?.applySettings?.formFillingInstructions
-  console.log('processFormLinkedIn instructions', { instructions})
+  console.log('processFormLinkedIn instructions', { instructions: window?.applySettings })
   let resumetext = resObj.text
 
   //let formFieldsClone = JSON.parse(JSON.stringify(formFields));
@@ -667,6 +681,6 @@ async function fillLinkedInForm(formFields) {
     }
   }
 
-  console.log('fillForm completed')
+  // console.log('fillForm completed')
   return
 } 

@@ -8,8 +8,7 @@
 // - use yamlrequrirements instead of template in generations. 
 // - <EditResume> - Chatbot + Suggestions 
 
-console.log('content.js: Loaded.')
-console.log('window.refine_yaml:', window.refine_yaml)
+// console.log('content.js: Loaded.') 
 
 window.delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -26,13 +25,13 @@ window.applySettings = false // From userData
 window.editorData = false // From userData
 
 window.devSettings = {
-  resume: true,
+  resume: true,      // create or skip resume generation
   coverletter: true,
   message: true,
   submit: true,
-  submitDelay: false,
-  localPandoc: false,
-  localServer: true,
+  submitDelay: true, // content_linkedin +20 seconds
+  localPandoc: false, // fillforms.generateResume
+  localServer: true, //fillforms.getTemplate
 }
 // Capture the element that was right-clicked
 document.addEventListener("contextmenu", (event) => {
@@ -68,12 +67,12 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 })
 
 async function setChromeStorage(key, val) {
-  console.log('Settting Chrome Storage:', val)
+  // console.log('Settting Chrome Storage:', val)
   let exists = chrome?.storage?.local
   exists &&
     (await new Promise((resolve) => {
       chrome.storage.local.set({ val }, () => {
-        console.log('SetChromeStorage:', val)
+        // console.log('SetChromeStorage:', val)
         window.updateSW('setChromeStorage', key, val)
         resolve()
       })
@@ -82,6 +81,7 @@ async function setChromeStorage(key, val) {
     localStorage.setItem(key, JSON.stringify(val))
   }
 }
+
 async function getChromeStorage(key) {
   let exists = chrome?.storage?.local
   if (exists) {
@@ -102,7 +102,7 @@ async function getChromeStorage(key) {
 async function apply(req = false) {
   // console.log('Apply2:')  
   
-  // LinkedIn gets handled separatelys
+  // LinkedIn gets handled separately
   let data = await window?.linkedInAutoApply()
   if (data.success) { return data }
 
@@ -174,7 +174,7 @@ async function checkUser(req=false){
     postdata = await getChromeStorage('postData') 
   }
   if(postdata && postdata?.id){  
-    console.log('Setting:', {postdata})
+    // console.log('checkUser:Setting:', {postdata})
     window.postData = postdata 
     window.postDataUpdated = false
   } 
@@ -191,9 +191,13 @@ async function checkUser(req=false){
       window.toggleStatusNotification(true, `Please create complete your profile.`);
       return false
     }
+    // console.log('checkUser:userdata: Request fetched userdata from chrome storage')
+  }
+  else{
+    // console.log('checkUser:userdata: Request came with userdata:')
   }
   if(userdata){   
-    console.log('Setting:', {userdata})
+    // console.log('checkUser:', {userdata})
     window.userData = userdata; 
   } 
   else{
@@ -201,7 +205,24 @@ async function checkUser(req=false){
   } 
   let settings = userData?.applySettings 
   if (settings) {  
-      window.applySettings = settings
+    // console.log('checkUser:applySettings:', {settings})
+    window.applySettings = settings?.[0]?.text
+  }
+  else{ 
+    let defaultS = {
+      ignoreCompanyList: '',
+      ignoreTitleList: '',
+      messageToRecruiter: `Generate a short message to a recruiter on LinkedIn's chat feature (30 words max, 10-20 is ideal). 
+    Simply tell the recruiter that you have submitted a resume and would like to speak with them.
+    `,
+      formFillingInstructions: `- Make educated guesses when needed and creative writing is allowed
+    - For text fields, provide either relevant information or a sensible placeholder if unsure.
+    - Do not lie about technical skills or matters of fact.
+    `,
+      messageRecruiter: false,
+      continuousMode: false,
+    }
+    window.applySettings = defaultS
   } 
 
   let editor = window?.userData?.editorData 
@@ -308,7 +329,7 @@ button.id = 'easyjobapps-button'
 button.innerHTML = 'Easy Job Apps'
 button.style = buttonStyle
 button.addEventListener('click', async () => {
-  console.log('Button Clicked')
+  // console.log('Button Clicked')
   // Send a message to the background script to open the sidepanel
   chrome.runtime.sendMessage({ toSwAction: 'openSidepanel' }) 
   // let validUser = await checkUser()

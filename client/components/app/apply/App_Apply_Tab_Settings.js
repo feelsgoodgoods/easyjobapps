@@ -18,13 +18,15 @@ Simply tell the recruiter that you have submitted a resume and would like to spe
 }
 
 function SettingsTab({ userData, setUserData }) {
-  let settings = userData.applySettings?.[0]?.text 
-  settings = settings && JSON.parse(settings) || {} 
 
-  const [ignoreCompanyList, setIgnoreCompanyList] = useState(settings.ignoreCompanyList || defaultS.ignoreCompanyList)
-  const [ignoreTitleList, setIgnoreTitleList] = useState(settings.ignoreTitleList || defaultS.ignoreTitleList)
-  const [messageToRecruiter, setMessageToRecruiter] = useState(settings.messageToRecruiter || defaultS.messageToRecruiter)
-  const [formFillingInstructions, setFormFillingInstructions] = useState(settings.formFillingInstructions || defaultS.formFillingInstructions)
+  console.log('\n\n userData.applySettings', userData.applySettings)
+
+  let settings = userData.applySettings?.[0]?.text  || defaultS
+
+  const [ignoreCompanyList, setIgnoreCompanyList] = useState(settings?.ignoreCompanyList)
+  const [ignoreTitleList, setIgnoreTitleList] = useState(settings?.ignoreTitleList)
+  const [messageToRecruiter, setMessageToRecruiter] = useState(settings?.messageToRecruiter )
+  const [formFillingInstructions, setFormFillingInstructions] = useState(settings?.formFillingInstructions )
   const [messageRecruiter, setMessageRecruiter] = useState(!!settings?.messageRecruiter)
   const [continuousMode, setContinuousMode] = useState(!!settings?.continuousMode)
  
@@ -42,12 +44,10 @@ function SettingsTab({ userData, setUserData }) {
       formFillingInstructions,
       continuousMode,
     } 
-    const updatedUserData = {
-      ...userData,
-      applySettings: applySettings
-    } 
-    await route({ 'applysettings': JSON.stringify(applySettings) }, "/userinfo_update_single", "applysettings");  
-    setUserData(updatedUserData) 
+    await route({ applySettings }, "/userinfo_update_single", "applysettings");  
+      let resp = await route({ 'applysettings': applySettings }, "/userinfo_update_single", "bio");  
+      const updatedFormData = { ...userData, applySettings: resp };  // id, label, text 
+      setUserData(updatedFormData);
   }
 
   const viewFormInstructions = (

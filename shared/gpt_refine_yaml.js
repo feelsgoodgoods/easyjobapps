@@ -1,35 +1,23 @@
-console.log('gpt all shared.js')
-async function refine_yaml(body) {
-  const { type, companyid, postid, user_id, editorData, oaikey, error = false, invalidYAML = '' } = body
-  console.group('shared:gpt:refine_yaml:', type)
+// console.log("gptroutes.js: Loaded"); 
+import { db } from './db.js'
+import { callChatGPT } from './gpt_call.js'
+import { r_endpoint } from './endpoints.js'  
 
-  // Retrieve content from the params
-  const resObj = editorData.resume
-  const covObj = editorData.coverletter
-  const docObj = type === 'resume' ? resObj : covObj
-  // console.log('REFINE YAML GIVEN', {docObj, resObj, covObj})
+ 
 
-  // Retrieve content from the database
-  const fromdb = await db.getContent(body)
-  const { post, defaultBio } = fromdb
-  // console.log('refine_yam RETRIEVED FROM DB', {fromdb});
-
-  // Retrieve the template
-  const domain = r_endpoint()
-  const cl = type === 'coverletter' ? '_cl' : ''
-  console.log('DOMAIN GOT:', domain)
-  const useCompressed = (docObj.template === 'None' || docObj.template === 'Compressed') && (await fetch(`${domain}/compressed${cl}.txt`).then((response) => response.text()))
-  const useExpanded = docObj.template === 'Expanded' && (await fetch(`${domain}/expanded${cl}.txt`).then((response) => response.text()))
-  const useAdvanced = docObj.template == 'Advanced' && docObj.latexText
-
-  const instructions = docObj.tailorText || ''
-  const templateContent = useCompressed || useExpanded || useAdvanced
-  const applicantText = docObj.text
-  const resumeText = type != 'coverletter' ? false : resObj.text
-  const jobDescription = post?.text
-  const bio = defaultBio || ''
-
-  // Set up system and user messages for ChatGPT
+const generatePrompt = (content) => {
+  let {
+    type,
+    applicantText,
+    resumeText,
+    jobDescription,
+    bio,
+    templateContent,
+    instructions, 
+    error = false,
+    invalidYAML = ''
+  } = content;
+ 
   // Set up system and user messages for ChatGPT
   let system_message = {
     role: 'system',
@@ -83,7 +71,7 @@ async function refine_yaml(body) {
 
   let user_messageTwo = {
     role: 'user',
-    content: `<JobDescription>${''}</JobDescription>`,
+    content: `<JobDescription>${jobDescription}</JobDescription>`,
   }
 
   let assistant_messageThree = {
@@ -134,6 +122,53 @@ async function refine_yaml(body) {
   }
 
   prompt.push(assistant_messageTwo, user_messageTwo, assistant_messageThree, user_messageThree, assistant_messageFour, user_messageFour, assistant_messageFive, user_messageFive)
+ 
+
+  return prompt 
+}
+
+async function refine_yaml(body) {
+  const { type, companyid, postid, user_id, editorData, oaikey, error = false, invalidYAML = '' } = body
+  console.group('shared:gpt:refine_yaml:', type)
+
+  // Retrieve content from the params
+  const resObj = editorData.resume
+  const covObj = editorData.coverletter
+  const docObj = type === 'resume' ? resObj : covObj 
+
+  // Retrieve content from the database
+  const fromdb = await db.getContent(body)
+  const { post, defaultBio } = fromdb 
+
+  // Retrieve the template
+  const domain = r_endpoint()
+  const cl = type === 'coverletter' ? '_cl' : '' 
+  const useCompressed = (docObj.template === 'None' || docObj.template === 'Compressed') && (await fetch(`${domain}/compressed${cl}.txt`).then((response) => response.text()))
+  const useExpanded = docObj.template === 'Expanded' && (await fetch(`${domain}/expanded${cl}.txt`).then((response) => response.text()))
+  const useAdvanced = docObj.template == 'Advanced' && docObj.latexText
+
+  // Get Content
+  const instructions = docObj.tailorText || ''
+  const templateContent = useCompressed || useExpanded || useAdvanced
+  const applicantText = docObj.text
+  const resumeText = type != 'coverletter' ? false : resObj.text
+  const jobDescription = post?.text || ''
+  const bio = defaultBio || ''
+  
+  let content = {
+    type,
+    applicantText,
+    resumeText,
+    jobDescription,
+    bio, 
+    templateContent,
+    instructions,
+    error,
+    invalidYAML 
+  }
+  console.table( content )   
+
+  let prompt = generatePrompt( content )
 
   const message = await callChatGPT(prompt, 'gpt-4o-mini', 4096, false, true, user_id, oaikey)
   if (!message) {
@@ -148,40 +183,28 @@ async function refine_yaml(body) {
   }
   console.log('refine_yaml:END', { message })
 
-  let yamlHeader = message.trim()
+  let yamlHeader = message.trim() 
+  if(yamlHeader){
+    // Strip any extra formatting around the YAML returned by ChatGPTprefix = '```'
+    let prefix = false
+    prefix = 'yaml'
+    if (yamlHeader.startsWith(prefix)) {
+      yamlHeader = yamlHeader.slice(prefix.length).trim()
+    }
+    prefix = '```'
+    if (yamlHeader.startsWith(prefix)) {
+      yamlHeader = yamlHeader.slice(prefix.length).trim()
+    }
+    prefix = 'yaml'
+    if (yamlHeader.startsWith(prefix)) {
+      yamlHeader = yamlHeader.slice(prefix.length).trim()
+    }
 
-  //  resumeText, instructions, templateContent, applicantTex, bio, postDescription: post.text,
-  // console.log('SHARED: GENERATE RESUME WITH:', { templateContent });
-  // let isBrowserContext = typeof window !== 'undefined';
-  // if (isBrowserContext) {
-  //   console.log('Running in a browser context');
-  //   console.log({
-  //     type,
-  //     resumeText,
-  //     resObj
-  //   })
-  // }
-
-  // Strip any extra formatting around the YAML returned by ChatGPTprefix = '```'
-  let prefix = false
-  prefix = 'yaml'
-  if (yamlHeader.startsWith(prefix)) {
-    yamlHeader = yamlHeader.slice(prefix.length).trim()
+    let suffix = '```'
+    if (yamlHeader.endsWith(suffix)) {
+      yamlHeader = yamlHeader.slice(0, -suffix.length).trim()
+    }
   }
-  prefix = '```'
-  if (yamlHeader.startsWith(prefix)) {
-    yamlHeader = yamlHeader.slice(prefix.length).trim()
-  }
-  prefix = 'yaml'
-  if (yamlHeader.startsWith(prefix)) {
-    yamlHeader = yamlHeader.slice(prefix.length).trim()
-  }
-
-  let suffix = '```'
-  if (yamlHeader.endsWith(suffix)) {
-    yamlHeader = yamlHeader.slice(0, -suffix.length).trim()
-  }
-
   // console.log('Generated YAML:', yamlHeader);
   console.groupEnd()
 
@@ -194,21 +217,18 @@ async function refine_yaml(body) {
       yamlContent: yamlHeader,
     },
   }
-}
-console.log('gpt all shared.js:refine_yaml', )
+} 
 
-// This protects node.js modules from breaking when loading this
-const isContentScript = typeof window != 'undefined'
-if ( isContentScript) {
-    window.refine_yaml = refine_yaml 
-}
-else{
-    console.log('use refine_yaml as a module');
-    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        module.exports = { refine_yaml }
-    }
-}
+export default refine_yaml
 
-
-// this will break content.js scripts as they are not modules
-// export { refine_yaml } 
+//  resumeText, instructions, templateContent, applicantTex, bio, postDescription: post.text,
+// console.log('SHARED: GENERATE RESUME WITH:', { templateContent });
+// let isBrowserContext = typeof window !== 'undefined';
+// if (isBrowserContext) {
+//   console.log('Running in a browser context');
+//   console.log({
+//     type,
+//     resumeText,
+//     resObj
+//   })
+// }
