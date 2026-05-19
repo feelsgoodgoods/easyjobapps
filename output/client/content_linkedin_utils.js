@@ -618,7 +618,7 @@ async function processFormLinkedIn(formFields) {
   // console.log('processFormLinkedIn passing ChatGPT: ', {resumetext, 'obj': window.userData, bio, 'appLinkedInfo': window.jobPost })
 
   let post = [system_message, user_message]
-  const message = await callChatGPT(post, 'gpt-4o-mini', 4096, false, false)
+  const message = await callChatGPT(post, 'gpt-4.1-mini', 4096, false, false)
   let formFieldsResponse = message
 
   // Fill out the formFields

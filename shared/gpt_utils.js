@@ -50,7 +50,7 @@ Return an empty array for attributes where valid values are not found.`
       content: jobPost
     }
   ] 
-  const chatGPTResponse = await callChatGPT(post, "gpt-4o-mini", 4096, false, false, user_id, oaikey);
+  const chatGPTResponse = await callChatGPT(post, "gpt-4.1-mini", 4096, false, false, user_id, oaikey);
   const companyRecord = JSON.parse(chatGPTResponse);
   if (!companyRecord) {
     console.groupEnd();
@@ -136,7 +136,7 @@ Return an empty array for attributes when valid values are not found.
       content: text
     }
   ]
-  let gpt = await callChatGPT(prompt, "gpt-4o-mini", 4096, false, false, user_id, oaikey )
+  let gpt = await callChatGPT(prompt, "gpt-4.1-mini", 4096, false, false, user_id, oaikey )
   try {
     parsedResponse = JSON.parse(gpt);
   } catch (error) {

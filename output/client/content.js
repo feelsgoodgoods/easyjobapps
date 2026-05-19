@@ -250,7 +250,7 @@ async function fetchResource(url, options = {}, timeout = 450000) {
 
 window.fetchResource = fetchResource
 
-async function callChatGPT(post, type = 'gpt-4o-mini', max_tokens = 4096, tools = false, chat = false) {
+async function callChatGPT(post, type = 'gpt-4.1-mini', max_tokens = 4096, tools = false, chat = false) {
   try {
     let headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${'This gets replaced in the service worker'}` }
     if (!Array.isArray(post)) {

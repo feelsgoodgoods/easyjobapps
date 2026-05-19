@@ -12,29 +12,30 @@ function createApplicationsTable() {
 
 async function generateLaTeXResume(post, genericLaTeXResume) {
   const prompt = `Given the job posting "${post}" and a generic LaTeX resume "${genericLaTeXResume}", generate a specific LaTeX resume for the role.`;
-  const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
-    prompt: prompt,
+  const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+    model: 'gpt-4.1-mini',
+    messages: [{ role: 'user', content: prompt }],
     max_tokens: 500
   }, {
     headers: {
       'Authorization': `Bearer ${process.env.YOUR_OPENAI_API_KEY}`
     }
   });
-  return response.data.choices[0].text.trim();
+  return response.data.choices[0].message.content.trim();
 }
 
 async function generateCoverLetter(post) {
   const prompt = `Given the job posting "${post}", generate a cover letter for the role.`;
   const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-    model: 'gpt-4-mini',
-    prompt: prompt,
+    model: 'gpt-4.1-mini',
+    messages: [{ role: 'user', content: prompt }],
     max_tokens: 500
   }, {
     headers: {
       'Authorization': `Bearer ${process.env.YOUR_OPENAI_API_KEY}`
     }
   });
-  return response.data.choices[0].text.trim();
+  return response.data.choices[0].message.content.trim();
 }
 
 async function processRecords() {

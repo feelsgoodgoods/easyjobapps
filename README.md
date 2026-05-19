@@ -99,3 +99,9 @@ Prod:
 services/pm2/ecosystem.config.js
     EasyJobApps = watch: ['./'], env: { NODE_ENV: 'production', PORT: 3003 }
     Autoapply = watch: ['./'], env: { NODE_ENV: 'staging', PORT: 3002 }
+
+
+ls ./venv -la
+chmod +x venv.sh
+eactivate
+pip install -r requirements.txt

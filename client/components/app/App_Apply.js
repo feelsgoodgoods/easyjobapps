@@ -147,14 +147,27 @@ function Apply({ showToast, postData, setPostData, userData, setUserData }) {
     // Template retrieval logic 
     const cl = activeTab == 'coverletter' ? '_cl' : '' 
     const template = editor.template;
-    const useCompressed = (template == 'None' || template == 'Compressed') && (await fetch(`${domain}/compressed${cl}.txt`).then((response) => response.text()))
-    const useExpanded = template == 'Expanded' && (await fetch(`${domain}/expanded${cl}.txt`).then((response) => response.text()))
-    const useDouble = template == 'Double' && (await fetch(`${domain}/double${cl}.txt`).then((response) => response.text()))
-    const useAdvanced = template == 'Advanced' && editor.latexText
-    const templateContent = useCompressed || useExpanded || useAdvanced 
-    console.log('Generate pd2', { domain, text, templateContent })
+
+    const fetchTemplateText = async (name) => {
+      const response = await fetch(`${domain}/${name}${cl}.txt`)
+      if (!response.ok) {
+        throw new Error(`Template fetch failed (${response.status}) for ${name}${cl}.txt`)
+      }
+      return response.text()
+    }
 
     try {
+      const useCompressed = (template == 'None' || template == 'Compressed') && (await fetchTemplateText('compressed'))
+      const useExpanded = template == 'Expanded' && (await fetchTemplateText('expanded'))
+      const useDouble = template == 'Double' && (await fetchTemplateText('double'))
+      const useAdvanced = template == 'Advanced' && editor.latexText
+      const templateContent = useCompressed || useExpanded || useDouble || useAdvanced
+      console.log('Generate pd2', { domain, text, templateContent })
+
+      if (!templateContent) {
+        throw new Error(`No template content found for template=${template}`)
+      }
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -178,6 +191,7 @@ function Apply({ showToast, postData, setPostData, userData, setUserData }) {
       return blob
     } catch (error) {
       console.error('Error generating PDF:', error)
+      showToast('Failed to generate document. Please check server connection and try again.')
       console.groupEnd()
       return false
     }
@@ -249,6 +263,8 @@ function Apply({ showToast, postData, setPostData, userData, setUserData }) {
 
       {activePopover && <UpdateDocumentPopover 
         userData={userData} 
+        resumeId={userData?.editorData?.resume?.id}
+        coverletterId={userData?.editorData?.coverletter?.id}
         postData={postData} setPostData={setPostData} 
         activeTab={activePopover} 
         showToast={showToast} 

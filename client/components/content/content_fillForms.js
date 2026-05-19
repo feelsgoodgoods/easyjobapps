@@ -82,7 +82,7 @@ async function processForm(formData) {
 
   // console.log('message', message)
   // Parse the response and return the filled form fields
-  const message = await callChatGPT(prompt, 'gpt-4o-mini', 4096, false, false)
+  const message = await callChatGPT(prompt, 'gpt-4.1-mini', 4096, false, false)
   console.log('RESPONSE len:' + message.length)
   // console.log(message)
   let data = JSON.parse(message).data
@@ -389,6 +389,9 @@ const generatePrompt = (content) => {
         1. The YAML must start and end with "---".
         2. It should be indented and formatted for direct use by Pandoc as metadata.
         3. Only return valid YAML frontmatter — no additional text or markdown. 
+        4. Every item in list fields like jobs.items, awards, and tools must be a YAML string scalar.
+        5. If any list item contains a colon ":" anywhere in the text, wrap the entire item in double quotes.
+        6. Never emit list items as key-value mappings unless the schema explicitly asks for an object.
   
         Your output will be inserted into a markdown file and used in the following Pandoc command for PDF generation:
         cmd = ['pandoc', md_filename, '--template', <LatexTemplate>]
@@ -491,6 +494,26 @@ const generatePrompt = (content) => {
  
   return prompt 
 }
+
+const quoteYamlScalar = (value) => `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+
+const sanitizeYamlListItems = (yamlText) => {
+  return yamlText
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(\s*-\s+)(.*)$/)
+      if (!match) return line
+
+      const prefix = match[1]
+      const value = match[2].trim()
+      if (!value) return line
+      if (/^["'].*["']$/.test(value)) return line
+
+      const shouldQuote = value.includes(':') || /^(true|false|null)$/i.test(value)
+      return shouldQuote ? `${prefix}${quoteYamlScalar(value)}` : line
+    })
+    .join('\n')
+}
   
 async function refine_yaml(body) {
   const { type, givenText = false, error = false, invalidYAML = '' } = body 
@@ -543,7 +566,7 @@ async function refine_yaml(body) {
  
   let post = generatePrompt( content )
 
-  const message = givenText || (await callChatGPT(post, 'gpt-4o-mini', 4096, false, true)) 
+  const message = givenText || (await callChatGPT(post, 'gpt-4.1-mini', 4096, false, true)) 
   if (typeof message === 'object' && message.error) { return message }
   
   let yamlHeader = message.trim() 
@@ -567,6 +590,8 @@ async function refine_yaml(body) {
     if (yamlHeader.endsWith(suffix)) {
       yamlHeader = yamlHeader.slice(0, -suffix.length).trim()
     }
+
+    yamlHeader = sanitizeYamlListItems(yamlHeader)
   }
 
   // console.group('Refine Yaml:END')

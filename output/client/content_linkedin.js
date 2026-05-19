@@ -407,7 +407,7 @@ async function sendMessageToRecruiter(){
             };  
             
             let post = [system_message, user_message];
-            const message = await callChatGPT(post, "gpt-4o-mini", 4096, false, true); 
+            const message = await callChatGPT(post, "gpt-4.1-mini", 4096, false, true); 
             console.log('MESSAGE TO RECRUITER', {message})
             text.innerHTML = message 
             text.dispatchEvent(new Event('input', { bubbles: true }));

@@ -59,10 +59,7 @@ https://platform.openai.com/docs/api-reference/fine-tuning/create
 https://platform.openai.com/docs/guides/text-generation/chat-completions-api  
 https://platform.openai.com/docs/models
 https://openai.com/api/pricing/
-gpt-4x-x supports a 128k context, Vision. 
-gpt-4o                $5.00 / 1M input | $15. / 1M output
-gpt-4o-mini	          $0.15 / 1M input | $0.6 / 1M output 
-gpt-3.5-turbo-0125    $0.50 / 1M input | $1.50 / 1M output 
+Use a current model alias and check OpenAI pricing docs for live rates.
 text-moderation-latest    32,768 input | Free
 */
 
@@ -73,7 +70,7 @@ text-moderation-latest    32,768 input | Free
 
 async function callChatGPT(
   post, 
-  type = "gpt-4o-mini", 
+  type = "gpt-4.1-mini", 
   max_tokens = 4096, // only applies for completion tokens
   tools = false, 
   chat = false,

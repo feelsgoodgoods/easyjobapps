@@ -26,19 +26,19 @@
       {
           "matches": ["<all_urls>"],
           "js": [ 
-            "client/content_molmo.js",
-            "client/content_getForms.js",
-            "client/content_fillForms.js",
-            "client/content.js",    
-            "client/content_linkedin_utils.js",
-            "client/content_linkedin.js",
+            "client/components/content/content_molmo.js", 
+            "client/components/content/content_getForms.js",
+            "client/components/content/content_fillForms.js",
+            "client/components/content.js",    
+            "client/components/content/content_linkedin_utils.js",
+            "client/components/content/content_linkedin.js",
             "rsc/html2canvas.min.js"
         ], 
           "run_at": "document_idle"
       }
   ],
   "background": { 
-      "service_worker": "client/service-worker.js"
+      "service_worker": "client/components/service-worker.js"
   }, 
   "host_permissions": [
     "http://localhost:3002/*",

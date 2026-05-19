@@ -193,7 +193,7 @@ async function apply(req = false) {
     await window.fillForms({ fillFormsOptions: JSON.stringify(fillFormsOptions) }) 
 }
 
-async function callChatGPT(post, type = 'gpt-4o-mini', max_tokens = 4096, tools = false, chat = false) {}
+async function callChatGPT(post, type = 'gpt-4.1-mini', max_tokens = 4096, tools = false, chat = false) {}
 
 window.fetchResource = async function fetchResource(url, options = {}, timeout = 450000) {
   // console.log(':fetchResource:', { url, options })  

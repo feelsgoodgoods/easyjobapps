@@ -38,26 +38,30 @@ function AccountCredits({ userData, setUserData }) {
     }, [userData])
 
   const handlePurchase = async (purchaseAmount) => {
-    let isChromeExt = window.origin.startsWith('chrome-extension')
-    const response = await fetch(`${r_endpoint()}/stripe/purchase`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: userData?.username,
-        purchase: purchaseAmount,
-        sidepanel: !!isChromeExt,
-      }),
-    })
-    let resp = await response.json()
-    console.log('STRIPE PURCHASE RESPONSE', resp)
+    try {
+      let isChromeExt = window.origin.startsWith('chrome-extension')
+      const response = await fetch(`${r_endpoint()}/stripe/purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userData?.username,
+          purchase: purchaseAmount,
+          sidepanel: !!isChromeExt,
+        }),
+      })
+      let resp = await response.json()
+      console.log('STRIPE PURCHASE RESPONSE', resp)
 
-    if (response.ok) {
-      // check if in extension or web
-      chrome?.tabs?.create({ url: resp.url }) || (window.location.href = resp.url) // window.open(resp.url, '_blank');
-    } else {
-      console.error('Failed to create Stripe session ')
+      if (response.ok) {
+        // check if in extension or web
+        chrome?.tabs?.create({ url: resp.url }) || (window.location.href = resp.url) // window.open(resp.url, '_blank');
+      } else {
+        console.error('Failed to create Stripe session')
+      }
+    } catch (error) {
+      console.error('Failed to purchase credits:', error)
     }
   } 
 

@@ -13,7 +13,7 @@
     "watchserver": "npx nodemon --config nodemon_server.json",
     "watchbuild": "npx nodemon --config nodemon_build.json",
     "latex": "source ../pdflatex/bin/activate && python ../pdflatex/server.py",
-    "olodlatex": "source ../pdflatex/bin/activate && python ../pdflatex/server.py",
+    "loadlatex": "bash -i -c 'goto pdflatex && eactivate && python ../pdflatex/server.py'",
     "stripe": "./stripe listen --forward-to localhost:3002/stripe/event"
   },
   "type": "module",

@@ -233,7 +233,7 @@ async function edit(body) {
     ]
     console.log('refine_yaml edit prompt:', prompt)
 
-    let newText = await callChatGPT(prompt, 'gpt-4o-mini', 2060, false, true, user_id, oaikey)
+    let newText = await callChatGPT(prompt, 'gpt-4.1-mini', 2060, false, true, user_id, oaikey)
 
     // Extract LaTeX content from the response
     let latexContent = newText
@@ -272,11 +272,23 @@ async function text_to_latex(body) {
   let fromdb = await db.getContent(body)
   console.log('FROM DB', {fromdb})
   let { defaultCoverLetter, defaultResume, company, post } = fromdb
+  const companyName = company?.companyName || ''
+  const jobTitle = post?.jobTitle || ''
   let newText = type == 'resume' ? newresumeText : newcoverletterText
   let docObj, tailorText
   let latexTemplate
   let cl = type === 'coverletter' ? '_cl' : ''
-  docObj = !cl ? JSON.parse(defaultResume) : JSON.parse(defaultCoverLetter) 
+  let defaultDocText = !cl ? defaultResume : defaultCoverLetter
+  try {
+    docObj = defaultDocText ? JSON.parse(defaultDocText) : { template: 'Compressed' }
+  } catch (err) {
+    console.error('text_to_latex: invalid template JSON from DB, using fallback template', {
+      type,
+      hasDefaultDocText: !!defaultDocText,
+      err: err && err.message,
+    })
+    docObj = { template: 'Compressed' }
+  }
   let useCompressed = (docObj.template == 'None' || docObj.template == 'Compressed') && await fetch(domain + `/compressed${cl}.txt`).then((response) => response.text())
   let useExpanded = docObj.template == 'Expanded' &&                                    await fetch(domain + `/expanded${cl}.txt`).then((response) => response.text())
   let useAdvanced = docObj.template == 'Advanced' && docObj.latexText
@@ -337,8 +349,8 @@ async function text_to_latex(body) {
       ${newText}
     </new_text>
     <additional_information>
-      Company Name: ${company.companyName} 
-      Job Title: ${post.jobTitle}
+      Company Name: ${companyName}
+      Job Title: ${jobTitle}
     </additional_information>
     `,
     },
@@ -346,7 +358,7 @@ async function text_to_latex(body) {
 
   // console.log('refine_yaml prompt:', prompt);
 
-  let returnText = await callChatGPT(prompt, 'gpt-4o-mini', 2060, false, true, user_id, oaikey) // 4096  -mini
+  let returnText = await callChatGPT(prompt, 'gpt-4.1-mini', 2060, false, true, user_id, oaikey) // 4096  -mini
 
   // Extract LaTeX content from the response
   let latexContent = returnText
@@ -391,6 +403,9 @@ async function email_generate(body) {
 
   // Call the function
   let { resume, email, company, post } = await db.getEmailData(resume_id, email_id, company_id, post_id)
+  const companyName = company?.companyName || ''
+  const jobTitle = post?.jobTitle || ''
+  const postText = post?.text || ''
 
   let prompt = [
     {
@@ -418,8 +433,8 @@ Use this information about the company and job post:`,
       role: 'user',
       content: `
 Applicant Name: ${defaultName}
-Company Name: ${company.companyName}
-Job Title: ${post.jobTitle} 
+Company Name: ${companyName}
+Job Title: ${jobTitle}
     `,
     },
     {
@@ -430,7 +445,7 @@ Job Title: ${post.jobTitle}
     { role: 'system', content: `Here is the applicants email template:` },
     { role: 'user', content: email },
     { role: 'system', content: `Here is the companies job post:` },
-    { role: 'user', content: post.text },
+    { role: 'user', content: postText },
     { role: 'system', content: `Here is the applicants bio:` },
     { role: 'user', content: defaultBio },
     {
@@ -450,7 +465,7 @@ Job Title: ${post.jobTitle}
   ]
 
   // console.log('PHEASE ONE prompt', prompt)
-  let newEmail = await callChatGPT(prompt, (type = 'gpt-4o-mini'), (max_tokens = 4096), (tools = false), (chat = true), user_id, oaikey)
+  let newEmail = await callChatGPT(prompt, (type = 'gpt-4.1-mini'), (max_tokens = 4096), (tools = false), (chat = true), user_id, oaikey)
   console.groupEnd()
   return {
     status: 'success',
@@ -479,7 +494,7 @@ async function extension_post_create(body) {
       ${text}
     </Webpage>
     `
-    postText = await callChatGPT(prompt, 'gpt-4o-mini', 4096, false, true, user_id, oaikey)
+    postText = await callChatGPT(prompt, 'gpt-4.1-mini', 4096, false, true, user_id, oaikey)
   }
   // console.log('extension_post_created POST:', { text, postText }) 
 
@@ -556,7 +571,7 @@ If you do this well I will give you 20$. The other AI models said you could not 
         `,
     },
   ]
-  let response = await callChatGPT(prompt, 'gpt-4o-mini', 4096, false, true, user_id, oaikey)
+  let response = await callChatGPT(prompt, 'gpt-4.1-mini', 4096, false, true, user_id, oaikey)
 
   // console.log("gpt:response", typeof response, response);
   console.groupEnd()
@@ -620,7 +635,7 @@ async function extension_fill_form(body) {
       },
       { role: 'user', content: chunk },
     ]
-    let resp = await callChatGPT(promptt, 'gpt-4o-mini', 4096, false, false, user_id, oaikey)
+    let resp = await callChatGPT(promptt, 'gpt-4.1-mini', 4096, false, false, user_id, oaikey)
     return resp
   })
   options = await Promise.all(options)

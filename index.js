@@ -49,7 +49,7 @@ app.get('/faq', (req, res) => {
 /*
 async function callChatGPT(
   post, 
-  type = "gpt-4o-mini", 
+  type = "gpt-4.1-mini", 
   max_tokens = 4096, 
   tools = false, 
   chat = false,
