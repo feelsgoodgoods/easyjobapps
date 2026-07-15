@@ -256,25 +256,32 @@ const DEV_WEBPACK_SOCKET = 'ws://localhost:3001/ws'
 const DEV_WEBPACK_HASH_KEY = 'easyJobAppsDevWebpackHash'
 const DEV_PENDING_TABS_KEY = 'easyJobAppsDevPendingTabReloads'
 let devWebpackHash
+let devWebpackStoredHash
 let devWebpackReloading = false
 
-async function reloadDevTabs() {
-  const { [DEV_PENDING_TABS_KEY]: tabIds = [] } = await chrome.storage.local.get(DEV_PENDING_TABS_KEY)
-  if (!tabIds.length) return
+async function restoreDevState() {
+  const state = await chrome.storage.local.get([DEV_WEBPACK_HASH_KEY, DEV_PENDING_TABS_KEY])
+  const tabIds = state[DEV_PENDING_TABS_KEY] || []
+  devWebpackStoredHash = state[DEV_WEBPACK_HASH_KEY]
+  if (!Array.isArray(tabIds) || !tabIds.length) return
   await chrome.storage.local.remove(DEV_PENDING_TABS_KEY)
   await Promise.allSettled(tabIds.map((tabId) => chrome.tabs.reload(tabId)))
 }
 
 async function reloadDevExtension(hash) {
-  if (devWebpackReloading) return
-  if (hash && (await chrome.storage.local.get(DEV_WEBPACK_HASH_KEY))[DEV_WEBPACK_HASH_KEY] === hash) return
-
+  if (devWebpackReloading || (hash && hash === devWebpackStoredHash)) return
   devWebpackReloading = true
-  const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
-  const nextState = { [DEV_PENDING_TABS_KEY]: tabs.map(({ id }) => id).filter(Number.isInteger) }
-  if (hash) nextState[DEV_WEBPACK_HASH_KEY] = hash
-  await chrome.storage.local.set(nextState)
-  chrome.runtime.reload()
+  try {
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+    const nextState = { [DEV_PENDING_TABS_KEY]: tabs.map(({ id }) => id).filter(Number.isInteger) }
+    if (hash) nextState[DEV_WEBPACK_HASH_KEY] = hash
+    await chrome.storage.local.set(nextState)
+    devWebpackStoredHash = hash || devWebpackStoredHash
+    chrome.runtime.reload()
+  } catch (error) {
+    devWebpackReloading = false
+    console.error('Development reload failed:', error)
+  }
 }
 
 function watchWebpackBuilds() {
@@ -293,5 +300,4 @@ function watchWebpackBuilds() {
   socket.onclose = () => setTimeout(watchWebpackBuilds, 2000)
 }
 
-reloadDevTabs()
-watchWebpackBuilds()
+restoreDevState().catch((error) => console.error('Development state restore failed:', error)).finally(watchWebpackBuilds)
