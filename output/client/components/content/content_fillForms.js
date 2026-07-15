@@ -116,6 +116,26 @@ async function processForm(formData) {
   return returnThis
 }
 
+const quoteYamlScalar = (value) => `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+
+const sanitizeYamlListItems = (yamlText) => {
+  return yamlText
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(\s*-\s+)(.*)$/)
+      if (!match) return line
+
+      const prefix = match[1]
+      const value = match[2].trim()
+      if (!value) return line
+      if (/^["'].*["']$/.test(value)) return line
+
+      const shouldQuote = value.includes(':') || /^(true|false|null)$/i.test(value)
+      return shouldQuote ? `${prefix}${quoteYamlScalar(value)}` : line
+    })
+    .join('\n')
+}
+
 window.fillForms = async function fillForms(request) {
   let fillFormsOptions = JSON.parse(request.fillFormsOptions)
   console.group('Fill Form(s)')
@@ -494,26 +514,6 @@ const generatePrompt = (content) => {
  
   return prompt 
 }
-
-const quoteYamlScalar = (value) => `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
-
-const sanitizeYamlListItems = (yamlText) => {
-  return yamlText
-    .split('\n')
-    .map((line) => {
-      const match = line.match(/^(\s*-\s+)(.*)$/)
-      if (!match) return line
-
-      const prefix = match[1]
-      const value = match[2].trim()
-      if (!value) return line
-      if (/^["'].*["']$/.test(value)) return line
-
-      const shouldQuote = value.includes(':') || /^(true|false|null)$/i.test(value)
-      return shouldQuote ? `${prefix}${quoteYamlScalar(value)}` : line
-    })
-    .join('\n')
-}
   
 async function refine_yaml(body) {
   const { type, givenText = false, error = false, invalidYAML = '' } = body 
@@ -590,8 +590,6 @@ async function refine_yaml(body) {
     if (yamlHeader.endsWith(suffix)) {
       yamlHeader = yamlHeader.slice(0, -suffix.length).trim()
     }
-
-    yamlHeader = sanitizeYamlListItems(yamlHeader)
   }
 
   // console.group('Refine Yaml:END')
