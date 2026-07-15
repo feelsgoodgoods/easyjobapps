@@ -144,21 +144,21 @@ The Load Job button does not primarily consume the direct `getPost` response. It
 
 ## Development without a production build
 
-### React/side-panel work
+### Root extension reload loop
 
-Run:
+Load `/home/carlos/Documents/GitHub/easyjobapps` once from `chrome://extensions` with Developer Mode enabled, then run:
 
 `npm run start`
 
-This runs Webpack Dev Server in development mode on port 3001, watches `client/**/*`, and writes rebuilt panel assets to `dist/`.
+This runs the existing Webpack Dev Server on port 3001, watches `client/**/*`, and writes rebuilt React assets to `dist/`. The root manifest continues to load the raw service worker and content scripts directly.
 
-After a rebuild:
+The service worker connects to Webpack's existing `/ws` endpoint. On a new successful build hash or a watched static-file change, it:
 
-1. Refresh the unpacked extension in `chrome://extensions`.
-2. Close/reopen or refresh the side panel.
-3. Refresh the job-site tab when content-script reinjection is needed.
+1. stores the build hash to prevent a reload loop;
+2. refreshes the active tab so content scripts are reinjected;
+3. calls `chrome.runtime.reload()` to reload the root extension and worker.
 
-Do not run `npm run build` for this development loop.
+The first installation of this watcher logic may require one manual extension reload because the previously loaded worker cannot execute code it has not loaded. Subsequent rebuilds reload automatically. No separate unpacked-extension directory or `npm run build` is required.
 
 ### Backend/API work
 
@@ -178,32 +178,17 @@ This combines the Webpack watcher with the configured backend, Stripe, and PDF/L
 
 ### Raw content-script or service-worker work
 
-These files are loaded directly by `manifest.json`, not bundled as Webpack entries. No npm build command is required after editing them.
+These files are loaded directly by `manifest.json`, not bundled as Webpack entries. Changes under `client/**/*` still trigger Webpack's watched static-file signal; the worker then refreshes the active tab and root extension.
 
-After editing:
-
-1. Refresh the unpacked extension in `chrome://extensions`.
-2. Refresh the target job-site tab to reinject content scripts.
-3. Reopen the side panel if the workflow uses it.
+Keep the content scripts in their current manifest order because several scripts communicate through shared globals in the content-script world.
 
 ### Command to avoid
 
 Do not use `npm run staging` as the normal extension-development loop. It starts a development Webpack compiler and repeated production builds that both clean/write `dist/`; the production build also recreates `output/`. Those writers can race.
 
-## Automatic reloading status
+## Automatic reloading workflow
 
-`webpack-ext-reloader` is installed but is not imported or configured in `webpack.config.js`. It currently provides no automatic extension reload.
-
-A future seamless setup should:
-
-1. Give the popup, service worker, and ordered content scripts explicit development Webpack entries.
-2. Emit them into one dedicated development-extension directory.
-3. Copy the manifest and static assets there.
-4. Configure `webpack-ext-reloader` for the background, content, and extension-page entries with page reload enabled.
-5. Load that development directory once in Chrome.
-6. Use one development compiler; never run a second production compiler against the same output directory.
-
-Preserve the manifest’s current content-script ordering if those scripts are bundled because they communicate through shared globals.
+The automatic loop uses the existing `npm run start` Webpack socket and the raw MV3 service worker. It does not use `webpack-ext-reloader`, an alternate manifest, or a second output tree.
 
 ## Known hazards to check before changing adjacent code
 

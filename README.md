@@ -7,17 +7,17 @@ Scan job posts and links, then generate a refined resume and cover letter.
 With the app, you can:
 
 - Auto-generate email, resume, and cover letters
-- Auto-fill online job forms and auto-upload neccessary documents. 
+- Auto-fill online job forms and auto-upload neccessary documents.
 
 
 Temporarily Out of Service due to redesign
 
-- Auto-send emails with resume and cover letter 
-- Individually or bulk process job posts found online.  
-- Create chatbots on a per company/job basis. 
+- Auto-send emails with resume and cover letter
+- Individually or bulk process job posts found online.
+- Create chatbots on a per company/job basis.
 - Grab or create a company's sitemap then use this information to:
 - - Extract relevant job/company information from links and embedded videos.
-- - Use an LLM-powered web crawler to navigate the web and scan for new jobs. 
+- - Use an LLM-powered web crawler to navigate the web and scan for new jobs.
 
 ## Pictures
 
@@ -35,17 +35,17 @@ Reference image: `img/5.jpg` (Settings Overview)
 
 `apt-get install texlive`
 `sudo apt-get install texlive-latex-extra` - `Y`
- 
-chrome://inspect/#service-workers 
+
+chrome://inspect/#service-workers
 
 chrome://serviceworker-internals/?devtools
 
 
 
 
-# NOTES 
+# NOTES
 
- 
+
 Stripe - you have two accounts. charles.karpati and charleskarpati. you want to use the charleskarpati one.
 
 When in dev: Forward events to your webhook. from root:
@@ -56,10 +56,10 @@ When in dev: Forward events to your webhook. from root:
 
 https://dashboard.stripe.com/test/webhooks/create?endpoint_location=local
 
- 
+
 In dev, Non-Webpacked assets are proxied to the server (index.js)
 
-webpack.DefinePlugin => 
+webpack.DefinePlugin =>
 
 - 'process.env.BROWSER': JSON.stringify(true),
 - - For /shared files resources check env.BROWSER
@@ -74,12 +74,12 @@ https://easyjobapps.com/?stripe_status=success&sidepanel=false&username=guest_62
 
 
 
-Webpack:3001 proxies to index.js:3002 
+Webpack:3001 proxies to index.js:3002
 
 WebpackENV == process.env.node_env || mode
 webpack start == development mode.
-weback build == production mode. 
-services/pm/ecosystem.config.js == staging or production 
+weback build == production mode.
+services/pm/ecosystem.config.js == staging or production
 
 
 WebPack Dev: 3001
@@ -88,10 +88,20 @@ Staging Index.js: 3003
 
 goto easyjobapps-staging
 
+### Chrome extension development
+
+Load `/home/carlos/Documents/GitHub/easyjobapps` from `chrome://extensions` with Developer Mode enabled, then run:
+
+`npm run start`
+
+The existing Webpack server rebuilds the React side panel and signals the root extension's service worker. After a successful build or watched content-script/service-worker change, the worker refreshes the active tab and reloads the extension. No separate unpacked-extension directory or `npm run build` is needed.
+
+Run `npm run watchserver` in a second terminal when local API routes are needed.
+
 Dev:
-    npm run watch dev 
+    npm run watch dev
     npm run watch devs
-    npm watchbuild      # Packages dist for use in Staging & Manifest
+    npm run watchbuild  # Packages dist for use in Staging & Manifest
 
 Prod:
     npm run prod       # from easyjobapps-staging, safely copies to ../easyjobapps

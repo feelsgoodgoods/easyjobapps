@@ -16,6 +16,7 @@ That means the side panel is not a separate app. It is the same webpacked React 
 - `npm run build` runs webpack in production mode, then `node output.js`.
 - `output.js` copies `manifest.json`, icons, content scripts, the service worker, and the whole `dist/` directory into `output/` for extension packaging.
 - In development, `npm run start` runs webpack dev server on port `3001`; `index.js` is the API/static server on port `3002`.
+- The root MV3 service worker listens to that existing Webpack socket. A successful build or watched raw-script change refreshes the active tab and reloads the root unpacked extension; there is no alternate development manifest or output tree.
 
 ## Runtime Detection
 
