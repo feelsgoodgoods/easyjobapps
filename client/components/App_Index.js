@@ -235,63 +235,55 @@ function App({user, post}) {
   }, [])
 
 
-  let btnStyle = { 
-    padding: '8px 16px', 
-    backgroundColor: '#007bff', 
-    color: 'white', 
-    border: 'none', 
-    borderRadius: '4px', 
-    cursor: 'pointer', 
-    marginRight: '10px'
-  } 
   // check if is chrome extension
   let isEx = window.origin.startsWith('chrome-extension')  
   let welcomeView = showWelcome && (
 
     <Popover id={`popover-welcome`} 
-            title={`Welcome ${userData.username !='guest' ? 'back ' + userData.username : 'to EasyJobApps'}!`} 
+            title={userData.username !='guest' ? `Welcome back ${userData.username}!` : 'Welcome to Easy Job Apps'}
             onClose={() => setShowWelcome(false)}
     >
-      <div style={{maxWidth:'500px'}}> 
-        <p>  
-          EasyJobApps is a free tool that autofills job forms with customized AI replies and file uploads. 
-        </p> 
-        <ol>  
-            <li>Add a resume, bio</li>
-            {isEx && ( <li> Find a job form </li> )}
-            {isEx && ( <li style={{paddingTop: '.25rem',paddingBottom: '.25rem'}}>  Click 'Apply'  </li> )}
-            {!isEx && ( <li style={{paddingTop: '.25rem',paddingBottom: '.25rem'}}> Copy and paste a job description </li> )} 
-            {!isEx && ( <li>Use AI to craft tailored versions </li> )}   
-          </ol>   
-        <details>
-          <summary style={{marginBottom: '1rem'}}>➡️ Features </summary> 
-          <ul>   
-            <li> <small>Create resume and coverletters.</small> </li> 
-            <li> <small>Pick an AI editor that suits you best.</small></li>
-            { isEx && <li> <small>One-click to load, tailor and 'Apply'.</small></li> }
-            <li> <small>+ Much Much <a href='/index.html'>More...</a></small></li>
-          </ul>
-        </details>
-        { !isEx && (
-          <details open>
-            <summary style={{marginBottom: '1rem'}}>➡️ <span style={{ color: 'red'}}>Get The Free Chrome Extension</span></summary> 
-            <ul>
-              <li> <small>Uploads your resume and coverletter.</small> </li>
-              <li> <small>One-click load, tailor and 'Apply'.</small></li>
-              <li> <small>Auto-apply to 100 LinkedIn Easy-Apply jobs daily.</small> </li> 
-            </ul>
-          </details>
-        )} 
-        {/* <p>Use on linkedin to auto fill, tailor, and submit 100 easy apply jobs per day - automatically.</p> */}
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}> 
-          <div></div>
-          <button onClick={() => { setShowWelcome(false); setTour('never'); }} className='remove' >
+      <div className="welcomeSplash">
+        <div className="welcomeSplash__intro">
+          <span className="welcomeSplash__eyebrow">{isEx ? 'Chrome side panel' : 'Web app and Chrome side panel'}</span>
+          <p>
+            Build a profile once, load the job you are viewing, and use Easy Job Apps to tailor resumes,
+            cover letters, and job-form answers from the same app surface.
+          </p>
+        </div>
+
+        <div className="welcomeSplash__workflow" aria-label="Easy Job Apps workflow">
+          <div>
+            <strong>1. Prepare</strong>
+            <span>Add your resume, bio, AI key, credits, and application settings.</span>
+          </div>
+          <div>
+            <strong>2. Load</strong>
+            <span>{isEx ? 'Use Load Job while browsing a job page.' : 'Paste a job description in the web app, or use the extension side panel beside a job page.'}</span>
+          </div>
+          <div>
+            <strong>3. Apply</strong>
+            <span>{isEx ? 'Use Apply on supported forms to fill answers and upload generated PDFs.' : 'Generate tailored documents in the browser page, then use the Chrome side panel for form filling.'}</span>
+          </div>
+        </div>
+
+        <div className="welcomeSplash__mode">
+          <div>
+            <strong>Browser page</strong>
+            <span>Manual job loading, profile setup, document editing, and PDF generation.</span>
+          </div>
+          <div>
+            <strong>Chrome side panel</strong>
+            <span>Runs the same React page next to job sites and coordinates with content scripts.</span>
+          </div>
+        </div>
+
+        <div className="welcomeSplash__actions">
+          <button onClick={() => { setShowWelcome(false); setTour('never'); }} className='remove welcomeSplash__secondary' >
             Don't Show Again
-          </button>  
-            <Tour setShowWelcome={setShowWelcome} style={btnStyle} />
-          <div></div>
-          <div></div>
-        </div> 
+          </button>
+          <Tour setShowWelcome={setShowWelcome} className="welcomeSplash__primary" />
+        </div>
       </div>
     </Popover>
   ) 
@@ -447,8 +439,6 @@ export default App
 // handleLogin = getLS guistId, set LS ephemeralsList from guestEphemeral obj
 
 // handleLogout
-
-
 
 
 

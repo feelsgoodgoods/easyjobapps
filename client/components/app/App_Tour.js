@@ -2,7 +2,7 @@ import React from 'react';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 
-const Tour = ({ setShowWelcome, style }) => {
+const Tour = ({ setShowWelcome, style, className }) => {
   const handleTourStart = () => {
     // Simulate a click on the 'popupWrap' before starting finstructionsthe tour
     const popupWrap = document.querySelector('.popupWrap');
@@ -145,7 +145,7 @@ const Tour = ({ setShowWelcome, style }) => {
   };
 
   return (
-    <button onClick={handleTourStart} style={style}>
+    <button onClick={handleTourStart} style={style} className={className}>
       Take a Tour
     </button>
   );
