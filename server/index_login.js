@@ -27,7 +27,7 @@ import path from 'path';
 import fs from 'fs'; 
 import {r_endpoint} from '../shared/endpoints.js';
 const repoEnvPath = path.resolve(process.cwd(), '.env');
-const adjacentEnvPath = path.resolve(process.cwd(), '../easyjobapps/.env'); 
+const adjacentEnvPath = path.resolve(process.cwd(), '../easyjobapps-staging/.env'); 
 const envPath = fs.existsSync(repoEnvPath) ? repoEnvPath : adjacentEnvPath; 
 dotenv.config({ path: envPath });  
 

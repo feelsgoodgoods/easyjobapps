@@ -12,7 +12,7 @@ import bcrypt from 'bcrypt';
 
 // Define the path to the .env file depending on your current working directory
 const repoEnvPath = path.resolve(process.cwd(), '.env');
-const adjacentEnvPath = path.resolve(process.cwd(), '../easyjobapps/.env'); 
+const adjacentEnvPath = path.resolve(process.cwd(), '../easyjobapps-staging/.env'); 
 const envPath = fs.existsSync(repoEnvPath) ? repoEnvPath : adjacentEnvPath; 
 dotenv.config({ path: envPath }); 
 
