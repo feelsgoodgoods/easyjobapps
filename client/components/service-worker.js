@@ -44,6 +44,75 @@ chrome.runtime.onInstalled.addListener(() => {
 })
 console.log('Service Worker Loaded')
 
+const DEV_WEBPACK_SOCKET = 'ws://localhost:3001/ws'
+const DEV_WEBPACK_HASH_KEY = 'easyJobAppsDevWebpackHash'
+let devWebpackHash
+let devWebpackReloading = false
+
+function getStoredValue(key) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([key], (result) => resolve(result[key]))
+  })
+}
+
+function setStoredValue(key, value) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [key]: value }, resolve)
+  })
+}
+
+function getActiveTabs() {
+  return new Promise((resolve) => {
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, resolve)
+  })
+}
+
+function reloadTab(tabId) {
+  return new Promise((resolve) => {
+    chrome.tabs.reload(tabId, resolve)
+  })
+}
+
+async function reloadAfterWebpackBuild(hash) {
+  if (devWebpackReloading) return
+
+  if (hash) {
+    const previousHash = await getStoredValue(DEV_WEBPACK_HASH_KEY)
+    if (previousHash === hash) return
+    await setStoredValue(DEV_WEBPACK_HASH_KEY, hash)
+  }
+
+  devWebpackReloading = true
+  const tabs = await getActiveTabs()
+  await Promise.all(tabs.filter((tab) => tab.id).map((tab) => reloadTab(tab.id)))
+  chrome.runtime.reload()
+}
+
+function watchWebpackBuilds() {
+  const socket = new WebSocket(DEV_WEBPACK_SOCKET)
+
+  socket.onmessage = ({ data }) => {
+    let message
+    try {
+      message = JSON.parse(data)
+    } catch {
+      return
+    }
+
+    if (message.type === 'hash') {
+      devWebpackHash = message.data
+    } else if (message.type === 'ok' || message.type === 'warnings') {
+      reloadAfterWebpackBuild(devWebpackHash)
+    } else if (message.type === 'static-changed') {
+      reloadAfterWebpackBuild()
+    }
+  }
+
+  socket.onclose = () => setTimeout(watchWebpackBuilds, 2000)
+}
+
+watchWebpackBuilds()
+
 // Add an event listener for the click event
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   console.log('Context Menu Clicked:', info)
