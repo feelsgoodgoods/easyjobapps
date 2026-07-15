@@ -191,8 +191,14 @@ export function deployProduction({ cwd = process.cwd(), argv = [], logger = cons
     return plan;
   }
 
-  rmSync(plan.destinationDir, { recursive: true, force: true });
   mkdirSync(plan.destinationDir, { recursive: true });
+
+  const destinationEntries = readdirSync(plan.destinationDir, { withFileTypes: true })
+    .filter((entry) => !entry.name.startsWith('.'));
+
+  for (const entry of destinationEntries) {
+    rmSync(resolve(plan.destinationDir, entry.name), { recursive: true, force: true });
+  }
 
   for (const entry of entries) {
     cpSync(

@@ -109,7 +109,7 @@ test('refuses to deploy to an ancestor of the source directory', () => {
   });
 });
 
-test('copies visible top-level entries from staging to production', () => {
+test('replaces visible production entries while preserving production dotfiles', () => {
   withTempDir((dir) => {
     const sourceDir = join(dir, 'easyjobapps-staging');
     const destinationDir = join(dir, 'easyjobapps');
@@ -118,8 +118,9 @@ test('copies visible top-level entries from staging to production', () => {
     mkdirSync(destinationDir);
 
     writeFileSync(join(sourceDir, 'visible.txt'), 'fresh');
-    writeFileSync(join(sourceDir, '.secret'), 'do not copy');
+    writeFileSync(join(sourceDir, '.env'), 'staging secret');
     writeFileSync(join(sourceDir, 'nested', 'file.txt'), 'nested fresh');
+    writeFileSync(join(destinationDir, '.env'), 'production secret');
     writeFileSync(join(destinationDir, 'stale.txt'), 'stale');
 
     deployProduction({
@@ -130,7 +131,7 @@ test('copies visible top-level entries from staging to production', () => {
 
     assert.equal(readFileSync(join(destinationDir, 'visible.txt'), 'utf8'), 'fresh');
     assert.equal(readFileSync(join(destinationDir, 'nested', 'file.txt'), 'utf8'), 'nested fresh');
-    assert.equal(existsSync(join(destinationDir, '.secret')), false);
+    assert.equal(readFileSync(join(destinationDir, '.env'), 'utf8'), 'production secret');
     assert.equal(existsSync(join(destinationDir, 'stale.txt')), false);
   });
 });
