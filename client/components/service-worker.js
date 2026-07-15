@@ -46,6 +46,7 @@ console.log('Service Worker Loaded')
 
 const DEV_WEBPACK_SOCKET = 'ws://localhost:3001/ws'
 const DEV_WEBPACK_HASH_KEY = 'easyJobAppsDevWebpackHash'
+const DEV_PENDING_TAB_RELOADS_KEY = 'easyJobAppsDevPendingTabReloads'
 let devWebpackHash
 let devWebpackReloading = false
 
@@ -69,8 +70,19 @@ function getActiveTabs() {
 
 function reloadTab(tabId) {
   return new Promise((resolve) => {
-    chrome.tabs.reload(tabId, resolve)
+    chrome.tabs.reload(tabId, () => {
+      void chrome.runtime.lastError
+      resolve()
+    })
   })
+}
+
+async function reloadPendingTabs() {
+  const tabIds = await getStoredValue(DEV_PENDING_TAB_RELOADS_KEY)
+  if (!Array.isArray(tabIds) || !tabIds.length) return
+
+  await setStoredValue(DEV_PENDING_TAB_RELOADS_KEY, [])
+  await Promise.all(tabIds.map(reloadTab))
 }
 
 async function reloadAfterWebpackBuild(hash) {
@@ -84,7 +96,8 @@ async function reloadAfterWebpackBuild(hash) {
 
   devWebpackReloading = true
   const tabs = await getActiveTabs()
-  await Promise.all(tabs.filter((tab) => tab.id).map((tab) => reloadTab(tab.id)))
+  const tabIds = tabs.map((tab) => tab.id).filter(Number.isInteger)
+  await setStoredValue(DEV_PENDING_TAB_RELOADS_KEY, tabIds)
   chrome.runtime.reload()
 }
 
@@ -111,6 +124,7 @@ function watchWebpackBuilds() {
   socket.onclose = () => setTimeout(watchWebpackBuilds, 2000)
 }
 
+reloadPendingTabs()
 watchWebpackBuilds()
 
 // Add an event listener for the click event
