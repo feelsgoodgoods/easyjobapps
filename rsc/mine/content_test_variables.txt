@@ -7,7 +7,7 @@
 // summary: "With over 10 years of software development experience, I specialize in UX/UI development, data-driven design, and web-based visualizations. My expertise includes creating intuitive user interfaces and impactful visual representations using tools like Power BI, HTML, and CSS. I have successfully collaborated with cross-functional teams to deliver multi-level roadmaps and scoping plans, ensuring alignment with business objectives. My strong background in API integration, wireframing, and prototyping (Figma) combined with a passion for innovative solutions, empowers me to tackle complex challenges and enhance user experiences."
 // jobs:
 //   - jobtitle: Software Developer
-//     company: AutoApply
+//     company: Easy Job Apps
 //     startdate: March 2024
 //     enddate: June 2024
 //     items:
@@ -239,11 +239,10 @@
 
 // window.applicantmessage = `
 //   Do not include a Certifications, References, or Additional Information section.
-//   There should be at minimum 3 bullet points for AutoApply, Addy-Ai, Voxels, and the Baltimore Neighborhood Indicator Association.
+//   There should be at minimum 3 bullet points for Easy Job Apps, Addy-Ai, Voxels, and the Baltimore Neighborhood Indicator Association.
 //   You must add at least 1 bullet point for the National Science Foundation.
 //   Include Freelance work if it is relevant to the job description. 
 //   Aim for three pages in length.
 // `
 
 //window.resumelatextemplate = "\n\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{longtable}\n\\usepackage{booktabs}\n\\title{Sample Document}\n\\author{Author Name}\n\\date{\\today}\n\n\\begin{document}\n\n\\maketitle\n\n$body$\n\n\\end{document}";
-

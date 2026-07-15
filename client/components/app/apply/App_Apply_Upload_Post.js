@@ -234,7 +234,7 @@ function UploadPostComponent({
     }
     else{
       console.log('handleManualUploadPost ERROR:', newPostData);
-      alert('Load Post: '+newPostData?.error||'' || 'Unable to load job. Please check your account settings.')
+      alert('Load Post: ' + (newPostData?.error || 'Unable to load job. Please check your account settings.'))
       setActivePopover(null);
     }
     console.groupEnd();

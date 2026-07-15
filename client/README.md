@@ -255,7 +255,7 @@ let sendGenerated = async (type, text, base64EncodedData) => {
 
 **Notes**
 
-- /home/carlos/Documents/GitHub/autoapply/client/components/app/apply/`App_Apply_Create.js`: Recieves `handleGenerateDocument` and creates a button which is available on the web version without content script. The content script has its own document generation functions as a result of the unreliable async functionality when passing messages and makes service-worker for API Calls. In the future the generateResume logic needs to be exported into its own handler because there is a discrepency how the content version and the sidepanel version work.
+- /home/carlos/Documents/GitHub/easyjobapps/client/components/app/apply/`App_Apply_Create.js`: Recieves `handleGenerateDocument` and creates a button which is available on the web version without content script. The content script has its own document generation functions as a result of the unreliable async functionality when passing messages and makes service-worker for API Calls. In the future the generateResume logic needs to be exported into its own handler because there is a discrepency how the content version and the sidepanel version work.
  
 ### Resume/ Cover Letter Generation:
 

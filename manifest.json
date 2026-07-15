@@ -15,7 +15,7 @@
       "default_path": "dist/index.html" 
   },
   "action": {
-      "default_title": "EasyJobApps"
+      "default_title": "Easy Job Apps"
   },
   "icons": {
       "16": "rsc/icon16.png",

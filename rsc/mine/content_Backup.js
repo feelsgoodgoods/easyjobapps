@@ -220,7 +220,7 @@ Washington D.C.
 301-300-4728; charles.karpati@gmail.com
 Work Experience:
 Software Developer
-Developer, AutoApply
+Developer, Easy Job Apps
 5331 Pooks Hill Rd, Bethesda, MD (remote)
 3/2024 - 6/2024, Hours per week: 40
 Duties, Accomplishments and Related Skills:

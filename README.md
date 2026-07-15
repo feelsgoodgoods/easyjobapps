@@ -21,17 +21,17 @@ Temporarily Out of Service due to redesign
 
 ## Pictures
 
-![Chrome Extension](./img/6.jpg "Chrome Extension")
+Reference image: `img/6.jpg` (Chrome Extension)
 
-![Settings Overview](./img/1.jpg "Settings Overview")
+Reference image: `img/1.jpg` (Settings Overview)
 
-![Settings Overview](./img/2.jpg "Settings Overview")
+Reference image: `img/2.jpg` (Settings Overview)
 
-![Settings Overview](./img/3.jpg "Settings Overview")
+Reference image: `img/3.jpg` (Settings Overview)
 
-![Settings Overview](./img/4.jpg "Settings Overview")
+Reference image: `img/4.jpg` (Settings Overview)
 
-![Settings Overview](./img/5.jpg "Settings Overview")
+Reference image: `img/5.jpg` (Settings Overview)
 
 `apt-get install texlive`
 `sudo apt-get install texlive-latex-extra` - `Y`
@@ -86,7 +86,7 @@ WebPack Dev: 3001
 Dev Index.js: 3002
 Staging Index.js: 3003
 
-goto autoapply
+goto easyjobapps-staging
 
 Dev:
     npm run watch dev 
@@ -94,14 +94,41 @@ Dev:
     npm watchbuild      # Packages dist for use in Staging & Manifest
 
 Prod:
-    npm run push       # cp repo to ../easyjobapps
+    npm run prod       # from easyjobapps-staging, safely copies to ../easyjobapps
+    npm run test:deploy
+    npm run prod -- --production-destination /path/to/production
+                      # required for any non-easyjobapps-staging source
 
 services/pm2/ecosystem.config.js
-    EasyJobApps = watch: ['./'], env: { NODE_ENV: 'production', PORT: 3003 }
-    Autoapply = watch: ['./'], env: { NODE_ENV: 'staging', PORT: 3002 }
+    easyjobapps = watch: ['./'], env: { NODE_ENV: 'production', PORT: 3003 }
+    easyjobapps-staging = watch: ['./'], env: { NODE_ENV: 'staging', PORT: 3002 }
 
 
 ls ./venv -la
 chmod +x venv.sh
 eactivate
 pip install -r requirements.txt
+
+## Legacy private note migration
+
+Migrated from legacy Easy Job Apps project and competitor notes.
+
+### Product and UX backlog
+
+- Revisit auth/login flow and validate local user/profile loading behavior.
+- Explore email and Bloomberg sourcing plus Puppeteer-based automation helpers.
+- Improve resume/CV flows: resume import, AI-assisted resume creation, template selection, and structured experience/education/skills capture.
+- Strengthen autofill, keyword/resume matching, and support for custom resume + cover letter per application.
+- Capture richer job preferences such as salary, availability, travel, work rights, and demographic/disclosure fields.
+
+### Market and competitor research
+
+- Track competitors including Ramped AI, ApplyDog, and auto-apply tools.
+- Compare pricing, onboarding friction, autofill depth, and CV/cover-letter generation quality.
+- Keep an eye on FAQ pain points: LinkedIn restrictions, Easy Apply failures, manual-question fallbacks, and profile completeness requirements.
+
+### Compliance and operations notes
+
+- Document Stripe-facing website requirements: business identity, support contact, refund/dispute/cancellation policy, privacy policy, promotions terms, transaction currency, and card-data security policy.
+- Review GDPR/privacy implications for tracking pixels, local storage, and non-essential network beacons.
+- Monitor outbound IP reputation/blacklisting during automation-heavy activity.

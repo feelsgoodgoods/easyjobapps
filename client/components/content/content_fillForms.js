@@ -392,6 +392,10 @@ const generatePrompt = (content) => {
         4. Every item in list fields like jobs.items, awards, and tools must be a YAML string scalar.
         5. If any list item contains a colon ":" anywhere in the text, wrap the entire item in double quotes.
         6. Never emit list items as key-value mappings unless the schema explicitly asks for an object.
+        7. Never output control or non-printing characters (for example: U+0088, \x88, or odd bullet glyphs).
+        8. Never output standalone boolean/null tokens as list items (true/false/null/yes/no/on/off), especially inside jobs.items.
+        9. jobs.items must be human-readable accomplishment statements, never placeholders or scalar literals.
+        10. Colons are allowed only for YAML key-value syntax. Do not include ":" inside any generated value text (for example in jobs.items, summary, awards, tools, or other string values); rewrite phrasing to avoid in-value colons.
   
         Your output will be inserted into a markdown file and used in the following Pandoc command for PDF generation:
         cmd = ['pandoc', md_filename, '--template', <LatexTemplate>]
@@ -497,22 +501,66 @@ const generatePrompt = (content) => {
 
 const quoteYamlScalar = (value) => `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
 
+const stripControlCharacters = (value) => {
+  // Keep newline/tab semantics intact while removing control glyphs that break PDF output.
+  return String(value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+}
+
+const dequote = (value) => {
+  const trimmed = value.trim()
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1).trim()
+  }
+  return trimmed
+}
+
+const isYamlBooleanLike = (value) => /^(true|false|null|yes|no|on|off)$/i.test(value)
+
 const sanitizeYamlListItems = (yamlText) => {
-  return yamlText
-    .split('\n')
+  const lines = stripControlCharacters(yamlText).split('\n')
+  let itemsIndent = null
+
+  const sanitizedLines = lines
     .map((line) => {
-      const match = line.match(/^(\s*-\s+)(.*)$/)
-      if (!match) return line
+      const cleanLine = stripControlCharacters(line)
+      const lineIndent = (cleanLine.match(/^\s*/) || [''])[0].length
+
+      if (/^\s*items:\s*$/.test(cleanLine)) {
+        itemsIndent = lineIndent
+        return cleanLine
+      }
+
+      if (
+        itemsIndent !== null &&
+        lineIndent <= itemsIndent &&
+        cleanLine.trim() !== '' &&
+        !/^\s*#/.test(cleanLine)
+      ) {
+        itemsIndent = null
+      }
+
+      const match = cleanLine.match(/^(\s*-\s+)(.*)$/)
+      if (!match) return cleanLine
 
       const prefix = match[1]
       const value = match[2].trim()
-      if (!value) return line
-      if (/^["'].*["']$/.test(value)) return line
+      if (!value) return null
 
-      const shouldQuote = value.includes(':') || /^(true|false|null)$/i.test(value)
-      return shouldQuote ? `${prefix}${quoteYamlScalar(value)}` : line
+      const unquotedValue = dequote(value)
+
+      // Hard drop invalid placeholder bullets that should never be rendered in work-history lists.
+      if (itemsIndent !== null && isYamlBooleanLike(unquotedValue)) return null
+
+      if (/^["'].*["']$/.test(value)) {
+        return `${prefix}${quoteYamlScalar(unquotedValue)}`
+      }
+
+      const shouldQuote = value.includes(':') || isYamlBooleanLike(unquotedValue)
+      return shouldQuote ? `${prefix}${quoteYamlScalar(unquotedValue)}` : `${prefix}${unquotedValue}`
     })
-    .join('\n')
+    .filter((line) => line !== null)
+
+  return sanitizedLines.join('\n')
 }
   
 async function refine_yaml(body) {

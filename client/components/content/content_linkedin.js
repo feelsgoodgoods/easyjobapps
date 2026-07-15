@@ -458,7 +458,7 @@ resumesText :
 file : null 
 latexText : "" 
 tailor : "0"
-tailorText : "Please refer to this table for the number of bullet points I require you to add for each job. \n\nYou MUST do this or else your work is no good.\n \n\nPast Job | Minimum Number of Bullet Points\nAutoApply | 5\nAddyAI | 5\nCryptoVoxels | 3\nNational Science Foundation | 1\nUniversity of Baltimore | 4\nFreelance | 2\n\nIf you include the 'Tools' part, strip it down to include relevant ones.\n\nDo not include a references section.\n\nPlease use keyword stuffing. When keyword stuffing with tools and technologies, please only do that if the word shows up in my resume's tool list. \n\nfinally\n\nCut the executive summary down to 3 sentences and have it speak to the job post."
+tailorText : "Please refer to this table for the number of bullet points I require you to add for each job. \n\nYou MUST do this or else your work is no good.\n \n\nPast Job | Minimum Number of Bullet Points\nEasy Job Apps | 5\nAddyAI | 5\nCryptoVoxels | 3\nNational Science Foundation | 1\nUniversity of Baltimore | 4\nFreelance | 2\n\nIf you include the 'Tools' part, strip it down to include relevant ones.\n\nDo not include a references section.\n\nPlease use keyword stuffing. When keyword stuffing with tools and technologies, please only do that if the word shows up in my resume's tool list. \n\nfinally\n\nCut the executive summary down to 3 sentences and have it speak to the job post."
 template : "Compressed"
 text : "---\nname: \"Charles Karpati\"\nemail: \"Charles. 
 */

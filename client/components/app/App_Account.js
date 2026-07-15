@@ -156,8 +156,8 @@ function Account({ userData, setUserData, handleLogin, isLoggedIn }) {
   return (
     <div id="tabhelpcontainer">
       <div style={{ background: '#eee', color: '#333', padding: '8px' }}>
-        <h1>Welcome {username || 'to easyjobapps'}!</h1>
-        EasyJobApps is a free tool that uses AI to autofill job-forms with custom replies and uploads tailored resumes and cover letters made specifically for the job description.
+        <h1>Welcome {username || 'to Easy Job Apps'}!</h1>
+        Easy Job Apps is a free tool that uses AI to autofill job-forms with custom replies and uploads tailored resumes and cover letters made specifically for the job description.
         <br />
         <br />
       </div>

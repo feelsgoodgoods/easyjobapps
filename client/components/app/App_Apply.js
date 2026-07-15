@@ -284,7 +284,7 @@ export default Apply
             <li>Click 'Load Job' while viewing a job description.</li> 
             <div style={{margin: '4px 0rem 4px -1rem', background: 'lightyellow', maxWidth:'500px' }}> 
               <p style={{margin:'0px', padding:'8px'}}>
-                💡 easyjobapps will tailor your resume and coverletter. You can make edits as needed, manually or with AI.
+                💡 Easy Job Apps will tailor your resume and coverletter. You can make edits as needed, manually or with AI.
               </p>
             </div>
             <li>Click 'Apply' while viewing the job application form. </li> 

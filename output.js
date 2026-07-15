@@ -10,10 +10,11 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
 // Define the base output directory
 const outputDir = './output';
 
-// Create the output directory if it doesn't exist
-if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+// Recreate the packaged output so stale files from older manifests cannot linger.
+if (fs.existsSync(outputDir)) {
+    fs.rmSync(outputDir, { recursive: true, force: true });
 }
+fs.mkdirSync(outputDir, { recursive: true });
 
 // Helper function to copy files while preserving folder structure
 function copyFileWithStructure(srcPath, destPath) {

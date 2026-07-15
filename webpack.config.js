@@ -87,11 +87,11 @@ export default (env, argv) => {
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <!-- autoapply.ico -->
+              <!-- easyjobapps.ico -->
               <link rel="icon" type="image/x-icon" href="./easyjobapps.ico">
-              <title>EasyJobApps</title>
+              <title>Easy Job Apps</title>
               <script src='content_popup.js'></script>
-              <meta title="EasyJobApps" />
+              <meta title="Easy Job Apps" />
           </head>
           <body>
               <div id="root"></div>
