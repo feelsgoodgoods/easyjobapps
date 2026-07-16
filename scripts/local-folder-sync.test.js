@@ -7,9 +7,12 @@ import {
   buildPortableProfile,
   createFolderObserver,
   findProfileName,
+  migrateProfileFile,
   profileFilename,
   pdfFilename,
+  sha256,
   validatePortableProfile,
+  writeDocumentAssets,
   writePdfAssets,
   writeProfileSafely,
 } from '../client/components/app/local-folder-sync.js'
@@ -57,6 +60,10 @@ class MemoryDirectoryHandle {
   async *values() {
     for (const file of this.files.values()) yield { ...file, kind: 'file' }
   }
+
+  async removeEntry(name) {
+    if (!this.files.delete(name)) throw new DOMException('Missing file', 'NotFoundError')
+  }
 }
 
 const date = new Date(2026, 6, 16, 12)
@@ -92,7 +99,8 @@ test('portable profile preserves application data without exporting credentials 
   assert.deepEqual(profile.profile.applySettings, { continuousMode: true })
   assert.equal(profile.profile.bio, 'Bio text')
   assert.deepEqual(profile.profile.resumes, [{ title: 'Main Resume', text: { title: 'Main Resume', template: 'Expanded' } }])
-  assert.equal(profile.currentApplication.resume64, 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l')
+  assert.equal('resume64' in profile.currentApplication, false)
+  assert.equal('coverletter64' in profile.currentApplication, false)
   assert.equal('id' in profile.currentApplication, false)
   assert.equal('user_id' in profile.currentApplication, false)
   assert.equal('meta' in profile.currentApplication, false)
@@ -108,8 +116,8 @@ test('portable profile normalizes stored JSON settings into editable objects', (
   assert.deepEqual(buildPortableProfile(stored, {}, { now: date }).profile.applySettings, { continuousMode: false })
 })
 
-test('profile and PDF names are date-first, descriptive, and filesystem-safe', () => {
-  assert.equal(profileFilename('Carlos / Agent', date), '2026-07-16_Carlos-Agent_easy-job-apps-profile.json')
+test('profile name is stable while PDF names are date-first and filesystem-safe', () => {
+  assert.equal(profileFilename('Carlos / Agent', date), 'easy-job-apps-profile.json')
   assert.equal(
     pdfFilename({ id: 42, companyName: 'Acme / Labs', jobTitle: 'Senior: Engineer' }, 'resume', date),
     '2026-07-16_Acme-Labs_Senior-Engineer_42_resume.pdf',
@@ -126,6 +134,40 @@ test('folder connection reuses the newest existing portable profile', async () =
 
   assert.equal(await findProfileName(directory, null, 'Carlos'), '2026-07-15_Carlos_easy-job-apps-profile.json')
   assert.equal(await findProfileName(directory, '2026-07-14_Carlos_easy-job-apps-profile.json', 'Carlos'), '2026-07-14_Carlos_easy-job-apps-profile.json')
+  await directory.getFileHandle('easy-job-apps-profile.json', { create: true })
+  assert.equal(await findProfileName(directory, '2026-07-14_Carlos_easy-job-apps-profile.json', 'Carlos'), 'easy-job-apps-profile.json')
+})
+
+test('dated profiles migrate to the single stable profile filename', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const legacyName = '2026-07-15_Carlos_easy-job-apps-profile.json'
+  const profile = buildPortableProfile(userData(), {}, { now: date })
+  const legacy = await writeProfileSafely(directory, legacyName, profile)
+
+  const migrated = await migrateProfileFile(directory, legacyName, 'Carlos', legacy.hash)
+
+  assert.equal(migrated.name, 'easy-job-apps-profile.json')
+  assert.equal(directory.files.has(legacyName), false)
+  assert.equal(directory.files.has('easy-job-apps-profile.json'), true)
+  assert.deepEqual(JSON.parse(directory.files.get('easy-job-apps-profile.json').contents), profile)
+
+  const recovered = await migrateProfileFile(directory, legacyName, 'Carlos', legacy.hash)
+  assert.equal(recovered.name, 'easy-job-apps-profile.json')
+  assert.equal(recovered.hash, migrated.hash)
+})
+
+test('stable profiles are normalized without legacy PDF payloads', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const name = 'easy-job-apps-profile.json'
+  const profile = buildPortableProfile(userData(), {}, { now: date })
+  profile.currentApplication.resume64 = 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l'
+  const handle = await directory.getFileHandle(name, { create: true })
+  handle.contents = JSON.stringify(profile, null, 2)
+
+  const migrated = await migrateProfileFile(directory, name, 'Carlos', await sha256(handle.contents))
+
+  assert.equal('resume64' in JSON.parse(migrated.contents).currentApplication, false)
+  assert.equal(directory.files.size, 1)
 })
 
 test('portable profile validation rejects unknown or malformed documents', () => {
@@ -155,6 +197,11 @@ test('portable profile validation rejects unknown or malformed documents', () =>
     ...profile,
     currentApplication: { resume64: 'data:text/html;base64,PGgxPm5vPC9oMT4=' },
   }), /invalid current application value/)
+
+  const legacy = structuredClone(profile)
+  legacy.currentApplication.resume64 = 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l'
+  validatePortableProfile(legacy)
+  assert.equal('resume64' in legacy.currentApplication, false)
 })
 
 test('safe profile writes refuse to overwrite an externally edited file', async () => {
@@ -305,6 +352,30 @@ test('pull uses persisted values when guest-mode dynamic reload routes are unava
   assert.deepEqual(updatedPost, profile.currentApplication)
 })
 
+test('profile pull ignores export-only package documents', async () => {
+  const guest = { ...userData(), username: 'guest', resumes: [], coverletters: [] }
+  const profile = buildPortableProfile(guest, {}, { now: date })
+  const directory = new MemoryDirectoryHandle()
+  const textFile = await directory.getFileHandle('Resume_resume.txt', { create: true })
+  const pdfFile = await directory.getFileHandle('2026-07-16_Resume_resume-original.pdf', { create: true })
+  textFile.contents = 'Do not import this text'
+  pdfFile.contents = new Blob(['%PDF-1.4 do not import'], { type: 'application/pdf' })
+  const calls = []
+
+  await applyPortableProfile(profile, guest, {
+    route: async (body, endpoint) => {
+      calls.push([endpoint, body])
+      return endpoint.startsWith('/userinfo_view/') ? false : true
+    },
+    setUserData: () => {},
+    setPostData: () => {},
+  })
+
+  assert.equal(JSON.stringify(calls).includes('Do not import'), false)
+  assert.equal(textFile.contents, 'Do not import this text')
+  assert.equal(await pdfFile.contents.text(), '%PDF-1.4 do not import')
+})
+
 test('pull fails without replacing React state when an existing persistence route fails', async () => {
   const profile = buildPortableProfile(userData(), {}, { now: date })
   let updated = false
@@ -349,4 +420,47 @@ test('new PDF base64 values are mirrored once with date-first filenames', async 
     writePdfAssets(directory, { ...postData, resume64: 'data:application/pdf;base64,JVBERi0xLjQgbmV3' }, secondHashes, date),
     ExternalFileChangedError,
   )
+})
+
+test('saved documents export stable text files and available original PDFs', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const originalPdf = new Blob(['%PDF-1.4 original'], { type: 'application/pdf' })
+  const documents = {
+    resumes: [{ title: 'Main Resume', text: JSON.stringify({ title: 'Main Resume', text: 'Resume body' }) }],
+    coverletters: [{ title: 'General Letter', text: 'Cover letter body' }],
+    editorData: { resume: { title: 'Main Resume', file: originalPdf } },
+  }
+
+  const hashes = await writeDocumentAssets(directory, documents, {}, date)
+  assert.deepEqual([...directory.files.keys()].sort(), [
+    '2026-07-16_Main-Resume_resume-original.pdf',
+    'General-Letter_coverletter.txt',
+    'Main-Resume_resume.txt',
+  ])
+  assert.equal(directory.files.get('Main-Resume_resume.txt').contents, 'Resume body')
+  assert.equal(directory.files.get('General-Letter_coverletter.txt').contents, 'Cover letter body')
+
+  await writeDocumentAssets(directory, documents, hashes, new Date(2026, 6, 17, 12))
+  assert.equal(directory.files.size, 3)
+
+  directory.files.get('Main-Resume_resume.txt').contents = 'external edit'
+  await assert.rejects(
+    writeDocumentAssets(directory, {
+      ...documents,
+      resumes: [{ title: 'Main Resume', text: JSON.stringify({ title: 'Main Resume', text: 'Updated resume body' }) }],
+    }, hashes, date),
+    ExternalFileChangedError,
+  )
+})
+
+test('document export disambiguates path-equivalent saved titles', async () => {
+  const directory = new MemoryDirectoryHandle()
+  await writeDocumentAssets(directory, {
+    resumes: [
+      { id: 1, title: 'A/B', text: JSON.stringify({ text: 'First' }) },
+      { id: 2, title: 'A:B', text: JSON.stringify({ text: 'Second' }) },
+    ],
+  }, {}, date)
+
+  assert.deepEqual([...directory.files.keys()].sort(), ['A-B_1_resume.txt', 'A-B_2_resume.txt'])
 })
