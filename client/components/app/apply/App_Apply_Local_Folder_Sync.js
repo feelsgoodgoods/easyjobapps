@@ -9,12 +9,10 @@ import {
   findProfileName,
   migrateProfileFile,
   profileFilename,
+  pushPortableProfilePackage,
   readFileText,
   sha256,
   validatePortableProfile,
-  writeDocumentAssets,
-  writePdfAssets,
-  writeProfileSafely,
 } from '../local-folder-sync.js'
 
 const FOLDER_SYNC_KEY = 'easyJobAppsLocalFolderSync'
@@ -28,6 +26,52 @@ async function permissionFor(handle, request = false) {
   let permission = await handle.queryPermission({ mode: 'readwrite' })
   if (permission !== 'granted' && request) permission = await handle.requestPermission({ mode: 'readwrite' })
   return permission
+}
+
+const iconButtonStyle = {
+  alignItems: 'center',
+  display: 'inline-flex',
+  height: '32px',
+  justifyContent: 'center',
+  padding: '0',
+  width: '32px',
+}
+
+function IconSvg({ children }) {
+  return (
+    <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18">
+      {children}
+    </svg>
+  )
+}
+
+function FolderIcon() {
+  return (
+    <IconSvg>
+      <path d="M3 6h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M3 10h18" />
+    </IconSvg>
+  )
+}
+
+function PullIcon() {
+  return (
+    <IconSvg>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
+    </IconSvg>
+  )
+}
+
+function PushIcon() {
+  return (
+    <IconSvg>
+      <path d="M12 21V9" />
+      <path d="m7 14 5-5 5 5" />
+      <path d="M5 3h14" />
+    </IconSvg>
+  )
 }
 
 function LocalFolderSync({ visible, userData, postData, setUserData, setPostData, showToast }) {
@@ -73,22 +117,9 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
         if (!supported) return setStatus('Local folder synchronization is not supported in this browser.')
         if (!saved?.enabled) return setStatus('Local folder synchronization is disabled.')
         if (!saved?.handle) return setStatus('Choose a folder to begin synchronization.')
-        if (saved.needsPull) return setStatus('The local profile has changes. Press Sync now before Easy Job Apps writes to it.')
+        if (saved.needsPull) return setStatus('The local profile has changes. Press Pull before Easy Job Apps writes to it.')
         const permission = await permissionFor(saved.handle)
-        if (permission === 'granted' && saved.profileName !== profileFilename()) {
-          try {
-            const migrated = await migrateProfileFile(saved.handle, saved.profileName, owner, saved.lastFileHash)
-            if (!active) return
-            await saveRecord({ ...saved, profileName: migrated.name, lastFileHash: migrated.hash })
-          } catch (error) {
-            if (error instanceof ExternalFileChangedError) {
-              await saveRecord({ ...saved, needsPull: true })
-              return setStatus('The local profile has changes. Press Sync now before Easy Job Apps writes to it.')
-            }
-            throw error
-          }
-        }
-        setStatus(permission === 'granted' ? `Connected to ${saved.handle.name}.` : 'Folder permission is required. Press Sync now to reconnect.')
+        setStatus(permission === 'granted' ? `Connected to ${saved.handle.name}.` : 'Folder permission is required. Press Pull or Push to reconnect.')
       } catch (error) {
         console.error('Unable to restore local folder synchronization:', error)
         setStatus('Unable to restore the local folder connection.')
@@ -118,72 +149,6 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
     }
   }, [observerSupported, owner, record?.owner, record?.enabled, record?.handle])
 
-  useEffect(() => {
-    if (!record?.enabled || !record?.handle || !userData) return
-    const timer = setTimeout(() => enqueue(async () => {
-      const current = recordRef.current
-      if (current?.owner !== owner || !current.enabled || await permissionFor(current.handle) !== 'granted') return
-      if (current.needsPull) {
-        setStatus('The local profile has changes. Press Sync now before Easy Job Apps writes to it.')
-        return
-      }
-      const nextStateHash = await stateHash(userData, postData)
-      if (nextStateHash === current.lastStateHash) return
-      try {
-        const profile = buildPortableProfile(userData, postData, {
-          revision: current.revision,
-          createdAt: current.createdAt,
-        })
-        const written = await writeProfileSafely(current.handle, current.profileName, profile, current.lastFileHash)
-        await saveRecord({
-          ...current,
-          needsPull: false,
-          revision: profile.revision,
-          createdAt: profile.createdAt,
-          lastFileHash: written.hash,
-          lastStateHash: nextStateHash,
-        })
-        setStatus(`Connected to ${current.handle.name}.`)
-      } catch (error) {
-        if (error instanceof ExternalFileChangedError) {
-          await saveRecord({ ...recordRef.current, needsPull: true })
-          setStatus('The profile was edited outside Easy Job Apps. Press Sync now to pull those changes.')
-          return
-        }
-        console.error('Unable to update the local Easy Job Apps profile:', error)
-        setStatus('Unable to update the local profile.')
-      }
-    }), 600)
-    return () => clearTimeout(timer)
-  }, [owner, userData, postData, record?.enabled, record?.handle])
-
-  useEffect(() => {
-    const hasGeneratedPdf = postData?.resume64 || postData?.coverletter64
-    const hasSavedDocument = userData?.resumes?.length || userData?.coverletters?.length
-      || userData?.editorData?.resume?.file || userData?.editorData?.coverletter?.file
-    if (!record?.enabled || !record?.handle || (!hasGeneratedPdf && !hasSavedDocument)) return
-    const timer = setTimeout(() => enqueue(async () => {
-      const current = recordRef.current
-      if (current?.owner !== owner || !current.enabled || await permissionFor(current.handle) !== 'granted') return
-      try {
-        let assetHashes = await writePdfAssets(current.handle, postData, current.assetHashes)
-        assetHashes = await writeDocumentAssets(current.handle, userData, assetHashes)
-        if (JSON.stringify(assetHashes) !== JSON.stringify(current.assetHashes || {})) {
-          await saveRecord({ ...current, assetHashes })
-        }
-      } catch (error) {
-        console.error('Unable to save documents to the local package:', error)
-        if (error.assetHashes && JSON.stringify(error.assetHashes) !== JSON.stringify(current.assetHashes || {})) {
-          await saveRecord({ ...current, assetHashes: error.assetHashes })
-        }
-        if (error instanceof ExternalFileChangedError) {
-          setStatus('A local package document changed outside Easy Job Apps and was not overwritten.')
-        }
-      }
-    }), 600)
-    return () => clearTimeout(timer)
-  }, [owner, userData, postData, record?.enabled, record?.handle])
-
   const toggleSync = async (event) => {
     const enabled = event.target.checked
     setBusy(true)
@@ -193,9 +158,9 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
         await saveRecord(next)
         if (!enabled) return setStatus('Local folder synchronization is disabled.')
         if (!next.handle) return setStatus('Choose a folder to begin synchronization.')
-        if (next.needsPull) return setStatus('The local profile has changes. Press Sync now before Easy Job Apps writes to it.')
+        if (next.needsPull) return setStatus('The local profile has changes. Press Pull before Easy Job Apps writes to it.')
         const permission = await permissionFor(next.handle)
-        setStatus(permission === 'granted' ? `Connected to ${next.handle.name}.` : 'Folder permission is required. Press Sync now to reconnect.')
+        setStatus(permission === 'granted' ? `Connected to ${next.handle.name}.` : 'Folder permission is required. Press Pull or Push to reconnect.')
       })
     } finally {
       setBusy(false)
@@ -209,39 +174,32 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
       setBusy(true)
       await enqueue(async () => {
         const foundName = await findProfileName(handle, recordRef.current?.profileName, owner)
-        let name = foundName || profileFilename()
-        let existingContents = foundName ? await readFileText(handle, name) : null
+        const name = foundName || profileFilename()
+        const existingContents = foundName ? await readFileText(handle, name) : null
         const profile = existingContents
           ? validatePortableProfile(JSON.parse(existingContents))
-          : buildPortableProfile(userData, postData)
-        if (profile.profile.username !== owner) throw new Error('The selected profile belongs to another Easy Job Apps user.')
-        let fileHash = existingContents
+          : null
+        if (profile?.profile.username !== owner) throw new Error('The selected profile belongs to another Easy Job Apps user.')
+        const fileHash = existingContents
           ? await sha256(existingContents)
-          : (await writeProfileSafely(handle, name, profile)).hash
-        if (existingContents && name !== profileFilename()) {
-          const migrated = await migrateProfileFile(handle, name, owner, fileHash)
-          name = migrated.name
-          existingContents = migrated.contents
-          fileHash = migrated.hash
-        }
+          : null
         const next = {
           enabled: true,
           handle,
           profileName: name,
           needsPull: !!existingContents,
-          revision: profile.revision,
-          createdAt: profile.createdAt,
+          revision: profile?.revision || 0,
+          createdAt: profile?.createdAt || null,
           lastFileHash: fileHash,
-          lastStateHash: await stateHash(userData, postData),
+          lastStateHash: existingContents ? await sha256(JSON.stringify({
+            profile: profile.profile,
+            currentApplication: profile.currentApplication,
+          })) : null,
           assetHashes: {},
         }
-        if (!existingContents) {
-          next.assetHashes = await writePdfAssets(handle, postData, next.assetHashes)
-          next.assetHashes = await writeDocumentAssets(handle, userData, next.assetHashes)
-        }
         await saveRecord(next)
-        setStatus(foundName ? `Existing profile found in ${handle.name}. Press Sync now to pull it.` : `Connected to ${handle.name}.`)
-        showToast('Local folder connected.')
+        setStatus(foundName ? `Existing profile found in ${handle.name}. Press Pull to import it.` : `Connected to ${handle.name}. Press Push to save this profile locally.`)
+        showToast('Local folder selected.')
       })
     } catch (error) {
       if (error?.name !== 'AbortError') {
@@ -253,7 +211,7 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
     }
   }
 
-  const syncNow = async () => {
+  const pullProfile = async () => {
     const current = recordRef.current
     if (!current?.handle || current.owner !== owner) return chooseFolder()
     setBusy(true)
@@ -267,8 +225,31 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
         if (!contents) throw new Error('The connected Easy Job Apps profile could not be found.')
         const profile = validatePortableProfile(JSON.parse(contents))
         if (profile.profile.username !== owner) throw new Error('The connected profile belongs to another Easy Job Apps user.')
-        const updatedUser = await applyPortableProfile(profile, userData, { route, setUserData, setPostData })
-        const migrated = await migrateProfileFile(connected.handle, connected.profileName, owner, await sha256(contents))
+        const expectedKey = folderSyncKey
+        const assertActive = () => {
+          if (keyRef.current !== expectedKey || recordRef.current?.owner !== owner
+            || recordRef.current?.handle !== connected.handle) {
+            throw new Error('The active Easy Job Apps account or folder changed during synchronization.')
+          }
+        }
+        const ownedRoute = (...args) => {
+          assertActive()
+          return route(...args)
+        }
+        const updatedUser = await applyPortableProfile(profile, userData, {
+          route: ownedRoute,
+          setUserData,
+          setPostData,
+          assertActive,
+        })
+        assertActive()
+        const migrated = await migrateProfileFile(
+          connected.handle,
+          connected.profileName,
+          owner,
+          await sha256(contents),
+          connected.assetHashes,
+        )
         await saveRecord({
           ...connected,
           profileName: migrated.name,
@@ -277,19 +258,73 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
           createdAt: profile.createdAt,
           lastFileHash: migrated.hash,
           lastStateHash: await stateHash(updatedUser, profile.currentApplication),
+          assetHashes: { ...connected.assetHashes, ...migrated.assetHashes },
         })
         setStatus(`Pulled revision ${profile.revision} from ${connected.handle.name}.`)
-        showToast('Local folder synchronized.')
+        showToast('Local profile pulled.')
       })
     } catch (error) {
       console.error('Unable to pull the local Easy Job Apps profile:', error)
+      const latest = recordRef.current
+      if (error.assetHashes && latest?.owner === owner) {
+        await saveRecord({ ...latest, assetHashes: { ...latest.assetHashes, ...error.assetHashes } })
+      }
       setStatus(error?.message || 'Unable to synchronize the local folder.')
     } finally {
       setBusy(false)
     }
   }
 
+  const pushProfile = async () => {
+    const current = recordRef.current
+    if (!current?.handle || current.owner !== owner) return chooseFolder()
+    setBusy(true)
+    try {
+      const permission = await permissionFor(current.handle, true)
+      if (permission !== 'granted') throw new Error('Read/write permission was not granted.')
+      await enqueue(async () => {
+        const connected = recordRef.current
+        if (keyRef.current !== folderSyncKey || connected?.owner !== owner || connected?.handle !== current.handle) {
+          throw new Error('The active Easy Job Apps account or folder changed during synchronization.')
+        }
+        const pushed = await pushPortableProfilePackage(connected.handle, connected, userData, postData, { owner })
+        if (keyRef.current !== folderSyncKey || recordRef.current?.owner !== owner
+          || recordRef.current?.handle !== connected.handle) {
+          throw new Error('The active Easy Job Apps account or folder changed during synchronization.')
+        }
+        await saveRecord({
+          ...connected,
+          profileName: pushed.profileName,
+          needsPull: false,
+          revision: pushed.revision,
+          createdAt: pushed.createdAt,
+          lastFileHash: pushed.lastFileHash,
+          lastStateHash: await stateHash(userData, postData),
+          assetHashes: pushed.assetHashes,
+        })
+        setStatus(`Pushed revision ${pushed.revision} to ${connected.handle.name}.`)
+        showToast('Local profile pushed.')
+      })
+    } catch (error) {
+      console.error('Unable to push the local Easy Job Apps profile:', error)
+      const latest = recordRef.current
+      if (error.assetHashes && latest?.owner === owner) {
+        await saveRecord({ ...latest, assetHashes: { ...latest.assetHashes, ...error.assetHashes } })
+        setStatus('A local package document changed outside Easy Job Apps and was not overwritten.')
+      } else if (error instanceof ExternalFileChangedError && latest?.owner === owner) {
+        await saveRecord({ ...latest, needsPull: true })
+        setStatus('The profile was edited outside Easy Job Apps. Press Pull before pushing local changes.')
+      } else {
+        setStatus(error?.message || 'Unable to push the local folder.')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (!visible) return null
+
+  const folderButtonLabel = record?.handle ? 'Choose another local folder' : 'Choose local folder'
 
   return (
     <div style={{ margin: '12px 10px 10px' }}>
@@ -306,15 +341,43 @@ function LocalFolderSync({ visible, userData, postData, setUserData, setPostData
       <p style={{ margin: '8px 0' }}>{status}</p>
       {record?.profileName && <p style={{ margin: '8px 0' }}>Profile: {record.profileName}</p>}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <button type="button" disabled={!supported || busy} onClick={chooseFolder}>
-          {record?.handle ? 'Choose Another Folder' : 'Choose Folder'}
+        <button
+          aria-label={folderButtonLabel}
+          disabled={!supported || busy}
+          onClick={chooseFolder}
+          style={iconButtonStyle}
+          title={folderButtonLabel}
+          type="button"
+        >
+          <FolderIcon />
         </button>
         {record?.handle && record?.enabled && (
-          <button type="button" disabled={busy} onClick={syncNow}>Sync Now</button>
+          <>
+            <button
+              aria-label="Pull local profile"
+              disabled={busy}
+              onClick={pullProfile}
+              style={iconButtonStyle}
+              title="Pull local profile"
+              type="button"
+            >
+              <PullIcon />
+            </button>
+            <button
+              aria-label="Push local profile"
+              disabled={busy || record?.needsPull}
+              onClick={pushProfile}
+              style={iconButtonStyle}
+              title="Push local profile"
+              type="button"
+            >
+              <PushIcon />
+            </button>
+          </>
         )}
       </div>
       <small style={{ display: 'block', marginTop: '8px' }}>
-        The profile JSON syncs both ways. Generated PDFs, uploaded PDFs, and saved document text are export-only local package files. Credentials and API keys are excluded.
+        Pull imports the profile JSON. Push writes the profile JSON plus generated PDFs, available uploaded PDFs, and saved document text. Credentials and API keys are excluded.
       </small>
       <small style={{ display: 'block', marginTop: '8px' }}>
         FileSystemObserver test: {observerSupported ? 'logging events while this panel is open' : 'not available in this extension context'}.

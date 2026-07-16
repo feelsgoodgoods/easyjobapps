@@ -26,13 +26,14 @@ function ApplyEditor({ userData, setUserData, activeTab, showToast, handleGenera
   const newForm = { id: 'new', file: '', title : '', text: '', tailorText: activeTab == 'resume' ? defaultResumeText:defaultCoverletterText, template: 'Expanded', latexText: '' }
 
   const fileInputRef = useRef(null)  
-  const [formData, setFormData] = useState( userData?.editorData?.[activeTab] || newForm ) 
+  const selectedEditorData = userData?.editorData?.[activeTab]
+  const [formData, setFormData] = useState(selectedEditorData || newForm)
   const [isEdited, setIsEdited] = useState(false);  
   
   useEffect(() => { 
-    setFormData( userData?.editorData?.[activeTab] || newForm )
+    setFormData(selectedEditorData || newForm)
     setIsEdited(false);
-  }, [activeTab])
+  }, [activeTab, selectedEditorData])
 
 
   useEffect(() => { 

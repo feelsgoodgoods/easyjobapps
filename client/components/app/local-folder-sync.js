@@ -9,6 +9,7 @@ const CURRENT_APPLICATION_FIELDS = [
   'resume', 'resumeText', 'coverletter', 'coverletterText',
 ]
 const LEGACY_ASSET_FIELDS = ['resume64', 'coverletter64']
+const TEMPLATE_TEXT_FIELDS = ['title', 'text', 'tailor', 'tailorText', 'template', 'latexText']
 
 class ExternalFileChangedError extends Error {
   constructor() {
@@ -36,11 +37,21 @@ function profileFilename() {
   return 'easy-job-apps-profile.json'
 }
 
+function shortHash(value) {
+  let hash = 2166136261
+  for (const character of String(value || '')) {
+    hash ^= character.codePointAt(0)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
 function pdfFilename(postData, type, date = new Date()) {
   const company = safeFilenamePart(postData?.companyName || postData?.company_name, 'company')
   const title = safeFilenamePart(postData?.jobTitle || postData?.job_title, 'job')
   const id = safeFilenamePart(postData?.id || postData?.post_id, '')
-  const suffix = [company, title, id, safeFilenamePart(type, 'document')].filter(Boolean).join('_')
+  const linkIdentity = !id && postData?.link ? `link-${shortHash(postData.link)}` : ''
+  const suffix = [company, title, id || linkIdentity, safeFilenamePart(type, 'document')].filter(Boolean).join('_')
   return `${localDate(date)}_${suffix}.pdf`
 }
 
@@ -64,7 +75,11 @@ function portableTemplates(records = []) {
     let text = record?.text
     try {
       text = typeof text === 'string' ? JSON.parse(text) : { ...text }
-      if (text && typeof text === 'object') delete text.id
+      if (text && typeof text === 'object') {
+        text = Object.fromEntries(TEMPLATE_TEXT_FIELDS
+          .filter((key) => text[key] !== undefined)
+          .map((key) => [key, text[key]]))
+      }
     } catch {}
     return { title: record?.title || text?.title || 'Untitled', text }
   })
@@ -156,6 +171,10 @@ function validatePortableProfile(profile) {
     if (!Array.isArray(profile.profile[type])) throw new Error(`Profile ${type} must be an array.`)
     if (profile.profile[type].some((template) => {
       const text = template?.text
+      const unknownTextField = text && typeof text === 'object' && !Array.isArray(text)
+        ? Object.keys(text).find((key) => !TEMPLATE_TEXT_FIELDS.includes(key))
+        : null
+      if (unknownTextField) throw new Error(`Profile ${type} contains an invalid template field: ${unknownTextField}`)
       return typeof template?.title !== 'string'
         || (typeof text !== 'string' && (!text || typeof text !== 'object' || Array.isArray(text)))
         || Object.keys(template).some((key) => !['title', 'text'].includes(key))
@@ -193,6 +212,17 @@ async function readFileHash(directory, name) {
   }
 }
 
+async function legacyProfileNames(directory, username) {
+  const names = []
+  const suffix = username
+    ? `_${safeFilenamePart(username, 'guest')}_easy-job-apps-profile.json`
+    : '_easy-job-apps-profile.json'
+  for await (const entry of directory.values()) {
+    if (entry.kind === 'file' && entry.name.endsWith(suffix)) names.push(entry.name)
+  }
+  return names.sort()
+}
+
 async function findProfileName(directory, preferred, username) {
   const stableName = profileFilename()
   try {
@@ -201,22 +231,8 @@ async function findProfileName(directory, preferred, username) {
   } catch (error) {
     if (error?.name !== 'NotFoundError') throw error
   }
-  if (preferred) {
-    try {
-      await directory.getFileHandle(preferred)
-      return preferred
-    } catch (error) {
-      if (error?.name !== 'NotFoundError') throw error
-    }
-  }
-  const names = []
-  const suffix = username
-    ? `_${safeFilenamePart(username, 'guest')}_easy-job-apps-profile.json`
-    : '_easy-job-apps-profile.json'
-  for await (const entry of directory.values()) {
-    if (entry.kind === 'file' && entry.name.endsWith(suffix)) names.push(entry.name)
-  }
-  return names.sort().at(-1) || null
+  const names = await legacyProfileNames(directory, username)
+  return names.at(-1) || null
 }
 
 async function readFileText(directory, name) {
@@ -258,44 +274,125 @@ async function writeProfileSafely(directory, name, profile, expectedHash = null)
   return { contents, hash: await sha256(contents) }
 }
 
-async function migrateProfileFile(directory, currentName, username, expectedHash = null) {
+function migrationSource(contents, username) {
+  const raw = JSON.parse(contents)
+  const legacyPostData = { ...raw.currentApplication }
+  const profile = validatePortableProfile(raw)
+  if (profile.profile.username !== username) throw new Error('The connected profile belongs to another Easy Job Apps user.')
+  return {
+    profile,
+    legacyPostData: LEGACY_ASSET_FIELDS.some((key) => legacyPostData[key]) ? legacyPostData : null,
+  }
+}
+
+async function removeLegacyProfiles(directory, username) {
+  for (const name of await legacyProfileNames(directory, username)) await directory.removeEntry(name)
+}
+
+async function assertLegacyProfilesMatch(directory, username, canonicalProfile) {
+  for (const name of await legacyProfileNames(directory, username)) {
+    const contents = await readFileText(directory, name)
+    if (!contents || JSON.stringify(migrationSource(contents, username).profile) !== JSON.stringify(canonicalProfile)) {
+      throw new ExternalFileChangedError()
+    }
+  }
+}
+
+async function exportLegacyAssets(directory, source, previousHashes) {
+  if (!source.legacyPostData) return { ...previousHashes }
+  return writePdfAssets(directory, source.legacyPostData, previousHashes, new Date(source.profile.updatedAt))
+}
+
+async function migrateProfileFile(directory, currentName, username, expectedHash = null, previousAssetHashes = {}) {
   const stableName = profileFilename()
   const currentContents = await readFileText(directory, currentName)
   if (!currentContents) {
     const recoveredContents = await readFileText(directory, stableName)
     if (!recoveredContents) throw new Error('The connected Easy Job Apps profile could not be found.')
-    const recoveredProfile = validatePortableProfile(JSON.parse(recoveredContents))
-    if (recoveredProfile.profile.username !== username) throw new Error('The connected profile belongs to another Easy Job Apps user.')
+    const recovered = migrationSource(recoveredContents, username)
+    await assertLegacyProfilesMatch(directory, username, recovered.profile)
+    const assetHashes = await exportLegacyAssets(directory, recovered, previousAssetHashes)
     const recoveredHash = await sha256(recoveredContents)
-    const normalizedContents = JSON.stringify(recoveredProfile, null, 2)
-    if (normalizedContents === recoveredContents) return { name: stableName, contents: recoveredContents, hash: recoveredHash }
-    const normalized = await writeProfileSafely(directory, stableName, recoveredProfile, recoveredHash)
-    return { name: stableName, ...normalized }
+    const normalizedContents = JSON.stringify(recovered.profile, null, 2)
+    const normalized = normalizedContents === recoveredContents
+      ? { contents: recoveredContents, hash: recoveredHash }
+      : await writeProfileSafely(directory, stableName, recovered.profile, recoveredHash)
+    await removeLegacyProfiles(directory, username)
+    return { name: stableName, ...normalized, assetHashes }
   }
+
   const currentHash = await sha256(currentContents)
   if (expectedHash && currentHash !== expectedHash) throw new ExternalFileChangedError()
-  const profile = validatePortableProfile(JSON.parse(currentContents))
-  if (profile.profile.username !== username) throw new Error('The connected profile belongs to another Easy Job Apps user.')
+  const current = migrationSource(currentContents, username)
   if (currentName === stableName) {
-    const normalizedContents = JSON.stringify(profile, null, 2)
-    if (normalizedContents === currentContents) return { name: stableName, contents: currentContents, hash: currentHash }
-    const normalized = await writeProfileSafely(directory, stableName, profile, currentHash)
-    return { name: stableName, ...normalized }
+    await assertLegacyProfilesMatch(directory, username, current.profile)
+    const assetHashes = await exportLegacyAssets(directory, current, previousAssetHashes)
+    const normalizedContents = JSON.stringify(current.profile, null, 2)
+    const normalized = normalizedContents === currentContents
+      ? { contents: currentContents, hash: currentHash }
+      : await writeProfileSafely(directory, stableName, current.profile, currentHash)
+    await removeLegacyProfiles(directory, username)
+    return { name: stableName, ...normalized, assetHashes }
   }
 
   const stableContents = await readFileText(directory, stableName)
   let written
+  let stableProfile
+  let stableHash
+  let canonical = current
   if (stableContents) {
-    const stableProfile = validatePortableProfile(JSON.parse(stableContents))
-    if (stableProfile.profile.username !== username || JSON.stringify(stableProfile) !== JSON.stringify(profile)) {
-      throw new ExternalFileChangedError()
-    }
-    written = { contents: stableContents, hash: await sha256(stableContents) }
-  } else {
-    written = await writeProfileSafely(directory, stableName, profile)
+    const stable = migrationSource(stableContents, username)
+    if (JSON.stringify(stable.profile) !== JSON.stringify(current.profile)) throw new ExternalFileChangedError()
+    canonical = stable.legacyPostData ? stable : current
+    stableProfile = stable.profile
+    stableHash = await sha256(stableContents)
   }
-  await directory.removeEntry(currentName)
-  return { name: stableName, ...written }
+  const assetHashes = await exportLegacyAssets(directory, canonical, previousAssetHashes)
+  if (stableContents) {
+    written = JSON.stringify(stableProfile, null, 2) === stableContents
+      ? { contents: stableContents, hash: stableHash }
+      : await writeProfileSafely(directory, stableName, stableProfile, stableHash)
+  } else {
+    written = await writeProfileSafely(directory, stableName, current.profile)
+  }
+  await removeLegacyProfiles(directory, username)
+  return { name: stableName, ...written, assetHashes }
+}
+
+async function pushPortableProfilePackage(directory, record = {}, userData = {}, postData = {}, options = {}) {
+  if (record.needsPull) throw new Error('Pull the local profile before pushing local changes.')
+  const owner = options.owner || record.owner || userData.username || 'guest'
+  if (record.owner && record.owner !== owner) {
+    throw new Error('The active Easy Job Apps account changed during synchronization.')
+  }
+  const previousName = record.profileName || profileFilename()
+  const targetName = profileFilename()
+  const previousHash = await readFileHash(directory, previousName)
+  if (record.lastFileHash && previousHash !== record.lastFileHash) throw new ExternalFileChangedError()
+  if (!record.lastFileHash && previousHash !== null) throw new ExternalFileChangedError()
+  if (previousName !== targetName && await readFileHash(directory, targetName) !== null) throw new ExternalFileChangedError()
+
+  const profile = buildPortableProfile(userData, postData, {
+    revision: record.revision,
+    createdAt: record.createdAt,
+    now: options.now,
+  })
+  if (profile.profile.username !== owner) throw new Error('The current profile belongs to another Easy Job Apps user.')
+
+  let assetHashes = await writePdfAssets(directory, postData, record.assetHashes || {}, options.now)
+  assetHashes = await writeDocumentAssets(directory, userData, assetHashes, options.now)
+
+  const written = await writeProfileSafely(directory, targetName, profile, previousName === targetName ? previousHash : null)
+  if (previousName !== targetName) await directory.removeEntry(previousName)
+
+  return {
+    profile,
+    profileName: targetName,
+    revision: profile.revision,
+    createdAt: profile.createdAt,
+    lastFileHash: written.hash,
+    assetHashes,
+  }
 }
 
 function createFolderObserver(directory, Observer = globalThis.FileSystemObserver, log = console.log) {
@@ -351,7 +448,25 @@ async function saveTemplates(type, templates, current, route) {
   return imported
 }
 
-async function applyPortableProfile(profile, userData, { route, setUserData, setPostData }) {
+function importedEditorData(userData, resumes, coverletters) {
+  const editorData = { ...userData.editorData }
+  for (const [type, records] of [['resume', resumes], ['coverletter', coverletters]]) {
+    const currentTitle = editorData[type]?.title
+    const selected = records.find((record) => record.title === currentTitle) || records[0]
+    if (!selected) {
+      delete editorData[type]
+      continue
+    }
+    let text = selected.text
+    try { text = typeof text === 'string' ? JSON.parse(text) : text } catch {}
+    editorData[type] = text && typeof text === 'object'
+      ? { ...text, id: selected.id, title: selected.title }
+      : { id: selected.id, title: selected.title, text: String(text || '') }
+  }
+  return editorData
+}
+
+async function applyPortableProfile(profile, userData, { route, setUserData, setPostData, assertActive = () => {} }) {
   validatePortableProfile(profile)
   if (!await route({ applysettings: profile.profile.applySettings }, '/userinfo_update_single')) {
     throw new Error('Unable to import apply settings.')
@@ -374,7 +489,9 @@ async function applyPortableProfile(profile, userData, { route, setUserData, set
   if (JSON.stringify(canonical(coverletters)) !== JSON.stringify([...profile.profile.coverletters].sort((a, b) => a.title.localeCompare(b.title)))) {
     throw new Error('Imported cover letter templates did not persist correctly.')
   }
-  const updatedUser = { ...userData, applySettings, bio, resumes, coverletters }
+  assertActive()
+  const editorData = importedEditorData(userData, resumes, coverletters)
+  const updatedUser = { ...userData, applySettings, bio, resumes, coverletters, editorData }
   setUserData(updatedUser)
   setPostData(profile.currentApplication)
   return updatedUser
@@ -404,8 +521,16 @@ function savedDocument(record) {
   return { id: record?.id || value?.id, title, text }
 }
 
+async function removeManagedAsset(directory, entry) {
+  const diskHash = await readFileHash(directory, entry.name)
+  if (diskHash === null) return
+  if (diskHash !== entry.fileHash) throw new ExternalFileChangedError()
+  await directory.removeEntry(entry.name)
+}
+
 async function writeDocumentAssets(directory, userData = {}, previousHashes = {}, date = new Date()) {
   const hashes = { ...previousHashes }
+  const currentTextKeys = new Set()
   try {
     for (const type of ['resume', 'coverletter']) {
       for (const record of userData[`${type}s`] || []) {
@@ -413,7 +538,9 @@ async function writeDocumentAssets(directory, userData = {}, previousHashes = {}
         const title = safeFilenamePart(document.title, 'Untitled')
         const id = safeFilenamePart(document.id, '')
         const name = [title, id, type].filter(Boolean).join('_')
-        await writeManagedAsset(directory, `${name}.txt`, document.text, `text:${type}:${id || title}`, hashes)
+        const key = `text:${type}:${id || title}`
+        currentTextKeys.add(key)
+        await writeManagedAsset(directory, `${name}.txt`, document.text, key, hashes)
       }
 
       const editor = userData.editorData?.[type]
@@ -432,6 +559,11 @@ async function writeDocumentAssets(directory, userData = {}, previousHashes = {}
         hashes,
       )
     }
+    for (const [key, entry] of Object.entries(hashes)) {
+      if (!key.startsWith('text:') || currentTextKeys.has(key)) continue
+      await removeManagedAsset(directory, entry)
+      delete hashes[key]
+    }
     return hashes
   } catch (error) {
     error.assetHashes = hashes
@@ -442,6 +574,7 @@ async function writeDocumentAssets(directory, userData = {}, previousHashes = {}
 async function writePdfAssets(directory, postData, previousHashes = {}, date = new Date()) {
   const hashes = { ...previousHashes }
   try {
+    const plans = []
     for (const type of ['resume', 'coverletter']) {
       const data = postData?.[`${type}64`]
       if (!data) continue
@@ -454,10 +587,17 @@ async function writePdfAssets(directory, postData, previousHashes = {}, date = n
       if ((previous && diskHash !== previous.fileHash) || (!previous && diskHash !== null)) {
         throw new ExternalFileChangedError()
       }
-      if (previous?.sourceHash === sourceHash) continue
       const blob = dataUrlToBlob(data)
-      await writeFile(directory, name, blob)
-      hashes[assetKey] = { name, sourceHash, fileHash: await sha256Buffer(await blob.arrayBuffer()) }
+      plans.push({ assetKey, blob, name, previous, sourceHash })
+    }
+    for (const plan of plans) {
+      if (plan.previous?.sourceHash === plan.sourceHash) continue
+      await writeFile(directory, plan.name, plan.blob)
+      hashes[plan.assetKey] = {
+        name: plan.name,
+        sourceHash: plan.sourceHash,
+        fileHash: await sha256Buffer(await plan.blob.arrayBuffer()),
+      }
     }
     return hashes
   } catch (error) {
@@ -486,6 +626,7 @@ export {
   migrateProfileFile,
   pdfFilename,
   profileFilename,
+  pushPortableProfilePackage,
   readFileText,
   sha256,
   validatePortableProfile,

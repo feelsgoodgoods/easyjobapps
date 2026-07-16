@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 import {
@@ -10,6 +11,7 @@ import {
   migrateProfileFile,
   profileFilename,
   pdfFilename,
+  pushPortableProfilePackage,
   sha256,
   validatePortableProfile,
   writeDocumentAssets,
@@ -133,7 +135,7 @@ test('folder connection reuses the newest existing portable profile', async () =
   await directory.getFileHandle('notes.txt', { create: true })
 
   assert.equal(await findProfileName(directory, null, 'Carlos'), '2026-07-15_Carlos_easy-job-apps-profile.json')
-  assert.equal(await findProfileName(directory, '2026-07-14_Carlos_easy-job-apps-profile.json', 'Carlos'), '2026-07-14_Carlos_easy-job-apps-profile.json')
+  assert.equal(await findProfileName(directory, '2026-07-14_Carlos_easy-job-apps-profile.json', 'Carlos'), '2026-07-15_Carlos_easy-job-apps-profile.json')
   await directory.getFileHandle('easy-job-apps-profile.json', { create: true })
   assert.equal(await findProfileName(directory, '2026-07-14_Carlos_easy-job-apps-profile.json', 'Carlos'), 'easy-job-apps-profile.json')
 })
@@ -142,18 +144,37 @@ test('dated profiles migrate to the single stable profile filename', async () =>
   const directory = new MemoryDirectoryHandle()
   const legacyName = '2026-07-15_Carlos_easy-job-apps-profile.json'
   const profile = buildPortableProfile(userData(), {}, { now: date })
+  await writeProfileSafely(directory, '2026-07-14_Carlos_easy-job-apps-profile.json', profile)
   const legacy = await writeProfileSafely(directory, legacyName, profile)
 
   const migrated = await migrateProfileFile(directory, legacyName, 'Carlos', legacy.hash)
 
   assert.equal(migrated.name, 'easy-job-apps-profile.json')
   assert.equal(directory.files.has(legacyName), false)
+  assert.equal(directory.files.has('2026-07-14_Carlos_easy-job-apps-profile.json'), false)
   assert.equal(directory.files.has('easy-job-apps-profile.json'), true)
   assert.deepEqual(JSON.parse(directory.files.get('easy-job-apps-profile.json').contents), profile)
 
   const recovered = await migrateProfileFile(directory, legacyName, 'Carlos', legacy.hash)
   assert.equal(recovered.name, 'easy-job-apps-profile.json')
   assert.equal(recovered.hash, migrated.hash)
+})
+
+test('stable migration preserves a divergent dated profile for explicit resolution', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const stable = buildPortableProfile(userData(), {}, { now: date })
+  const changedUser = userData()
+  changedUser.bio = [{ text: 'Different bio' }]
+  const dated = buildPortableProfile(changedUser, {}, { now: date })
+  const stableWrite = await writeProfileSafely(directory, 'easy-job-apps-profile.json', stable)
+  await writeProfileSafely(directory, '2026-07-15_Carlos_easy-job-apps-profile.json', dated)
+
+  await assert.rejects(
+    migrateProfileFile(directory, 'easy-job-apps-profile.json', 'Carlos', stableWrite.hash),
+    ExternalFileChangedError,
+  )
+  assert.equal(directory.files.has('easy-job-apps-profile.json'), true)
+  assert.equal(directory.files.has('2026-07-15_Carlos_easy-job-apps-profile.json'), true)
 })
 
 test('stable profiles are normalized without legacy PDF payloads', async () => {
@@ -167,7 +188,23 @@ test('stable profiles are normalized without legacy PDF payloads', async () => {
   const migrated = await migrateProfileFile(directory, name, 'Carlos', await sha256(handle.contents))
 
   assert.equal('resume64' in JSON.parse(migrated.contents).currentApplication, false)
-  assert.equal(directory.files.size, 1)
+  assert.equal(directory.files.has('easy-job-apps-profile.json'), true)
+  assert.equal([...directory.files.keys()].some((file) => file.endsWith('_resume.pdf')), true)
+})
+
+test('legacy profile PDFs become export-only package files before removal', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const name = '2026-07-15_Carlos_easy-job-apps-profile.json'
+  const profile = buildPortableProfile(userData(), { companyName: 'Acme', jobTitle: 'Engineer' }, { now: date })
+  profile.currentApplication.resume64 = 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l'
+  const handle = await directory.getFileHandle(name, { create: true })
+  handle.contents = JSON.stringify(profile, null, 2)
+
+  const migrated = await migrateProfileFile(directory, name, 'Carlos', await sha256(handle.contents), {})
+
+  assert.equal(directory.files.has('2026-07-16_Acme_Engineer_resume.pdf'), true)
+  assert.equal('resume64' in JSON.parse(migrated.contents).currentApplication, false)
+  assert.equal(Object.keys(migrated.assetHashes).length, 1)
 })
 
 test('portable profile validation rejects unknown or malformed documents', () => {
@@ -202,6 +239,14 @@ test('portable profile validation rejects unknown or malformed documents', () =>
   legacy.currentApplication.resume64 = 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l'
   validatePortableProfile(legacy)
   assert.equal('resume64' in legacy.currentApplication, false)
+
+  const nested = structuredClone(profile)
+  nested.profile.resumes[0].text.resume64 = 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l'
+  assert.throws(() => validatePortableProfile(nested), /invalid template field/)
+
+  const stored = userData()
+  stored.resumes[0].text = JSON.stringify({ title: 'Main Resume', text: 'Body', resume64: 'do-not-export' })
+  assert.equal('resume64' in buildPortableProfile(stored, {}, { now: date }).profile.resumes[0].text, false)
 })
 
 test('safe profile writes refuse to overwrite an externally edited file', async () => {
@@ -284,6 +329,7 @@ test('pull applies portable settings through existing routes and updates existin
   const calls = []
   let nextId = 100
   const stored = userData()
+  stored.editorData = { resume: { id: 8, title: 'Remove Me', text: 'stale editor content' } }
   stored.resumes.push({ id: 8, title: 'Remove Me', text: 'old' })
   let resumes = structuredClone(stored.resumes)
   let coverletters = structuredClone(stored.coverletters)
@@ -330,6 +376,8 @@ test('pull applies portable settings through existing routes and updates existin
   assert.equal(calls.some(([endpoint]) => endpoint === '/userinfo_upload'), false)
   assert.equal(calls.some(([endpoint, body]) => endpoint === '/userinfo_remove' && body.userinfoid === 8), true)
   assert.equal(updatedUser.resumes.some((record) => record.title === 'Remove Me'), false)
+  assert.equal(updatedUser.editorData.resume.title, 'Main Resume')
+  assert.equal(updatedUser.editorData.resume.template, 'Expanded')
   assert.deepEqual(updatedPost, profile.currentApplication)
 })
 
@@ -374,6 +422,115 @@ test('profile pull ignores export-only package documents', async () => {
   assert.equal(JSON.stringify(calls).includes('Do not import'), false)
   assert.equal(textFile.contents, 'Do not import this text')
   assert.equal(await pdfFile.contents.text(), '%PDF-1.4 do not import')
+})
+
+test('explicit push writes canonical profile JSON and outbound package assets', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const previousProfile = buildPortableProfile(userData(), { companyName: 'Old' }, { now: date })
+  const previous = await writeProfileSafely(
+    directory,
+    profileFilename(),
+    previousProfile,
+  )
+  const currentUser = {
+    ...userData(),
+    resumes: [{ id: 7, title: 'Main Resume', text: JSON.stringify({ text: 'Updated resume text' }) }],
+  }
+  const postData = {
+    companyName: 'Acme',
+    jobTitle: 'Engineer',
+    resume64: 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l',
+  }
+
+  const pushed = await pushPortableProfilePackage(directory, {
+    owner: 'Carlos',
+    profileName: profileFilename(),
+    revision: 1,
+    createdAt: previousProfile.createdAt,
+    lastFileHash: previous.hash,
+    lastStateHash: 'stale',
+    assetHashes: {},
+  }, currentUser, postData, { now: date })
+
+  const saved = JSON.parse(directory.files.get(profileFilename()).contents)
+  assert.equal(saved.currentApplication.companyName, 'Acme')
+  assert.equal('resume64' in saved.currentApplication, false)
+  assert.equal(directory.files.has('2026-07-16_Acme_Engineer_resume.pdf'), true)
+  assert.equal(directory.files.has('Main-Resume_7_resume.txt'), true)
+  assert.equal(directory.files.has('Main-Cover-Letter_9_coverletter.txt'), true)
+  assert.equal(pushed.profileName, profileFilename())
+  assert.equal(pushed.revision, 2)
+  assert.equal(pushed.lastFileHash, await sha256(directory.files.get(profileFilename()).contents))
+  assert.equal(Object.keys(pushed.assetHashes).length, 3)
+})
+
+test('explicit push refuses pending pull or external profile changes before exporting assets', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const previous = await writeProfileSafely(directory, profileFilename(), buildPortableProfile(userData(), {}, { now: date }))
+  const postData = {
+    companyName: 'Acme',
+    jobTitle: 'Engineer',
+    resume64: 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l',
+  }
+
+  await assert.rejects(
+    pushPortableProfilePackage(directory, {
+      owner: 'Carlos',
+      profileName: profileFilename(),
+      needsPull: true,
+      lastFileHash: previous.hash,
+      assetHashes: {},
+    }, userData(), postData, { now: date }),
+    /Pull the local profile before pushing/,
+  )
+  assert.deepEqual([...directory.files.keys()], [profileFilename()])
+
+  directory.files.get(profileFilename()).contents = JSON.stringify({ externally: 'changed' })
+  await assert.rejects(
+    pushPortableProfilePackage(directory, {
+      owner: 'Carlos',
+      profileName: profileFilename(),
+      lastFileHash: previous.hash,
+      assetHashes: {},
+    }, userData(), postData, { now: date }),
+    ExternalFileChangedError,
+  )
+  assert.deepEqual([...directory.files.keys()], [profileFilename()])
+})
+
+test('explicit push refuses a newly appeared untracked profile before exporting assets', async () => {
+  const directory = new MemoryDirectoryHandle()
+  await writeProfileSafely(directory, profileFilename(), buildPortableProfile(userData(), {}, { now: date }))
+
+  await assert.rejects(
+    pushPortableProfilePackage(directory, {
+      owner: 'Carlos',
+      profileName: profileFilename(),
+      lastFileHash: null,
+      assetHashes: {},
+    }, userData(), {
+      companyName: 'Acme',
+      jobTitle: 'Engineer',
+      resume64: 'data:application/pdf;base64,JVBERi0xLjQgcmVzdW1l',
+    }, { now: date }),
+    ExternalFileChangedError,
+  )
+  assert.deepEqual([...directory.files.keys()], [profileFilename()])
+})
+
+test('local folder UI exposes accessible icon-only folder, pull, and push actions', () => {
+  const source = readFileSync(new URL('../client/components/app/apply/App_Apply_Local_Folder_Sync.js', import.meta.url), 'utf8')
+
+  assert.match(source, /aria-label=\{folderButtonLabel\}/)
+  assert.match(source, /title=\{folderButtonLabel\}/)
+  assert.match(source, /aria-label="Pull local profile"/)
+  assert.match(source, /title="Pull local profile"/)
+  assert.match(source, /aria-label="Push local profile"/)
+  assert.match(source, /title="Push local profile"/)
+  assert.doesNotMatch(source, />\s*(Sync Now|Choose Folder|Choose Another Folder|Pull|Push)\s*</)
+  assert.doesNotMatch(source, /setTimeout[\s\S]*writeProfileSafely/)
+  assert.doesNotMatch(source, /setTimeout[\s\S]*writePdfAssets/)
+  assert.doesNotMatch(source, /setTimeout[\s\S]*writeDocumentAssets/)
 })
 
 test('pull fails without replacing React state when an existing persistence route fails', async () => {
@@ -422,6 +579,24 @@ test('new PDF base64 values are mirrored once with date-first filenames', async 
   )
 })
 
+test('generated PDFs for same-title jobs use the job link as a fallback identity', async () => {
+  const directory = new MemoryDirectoryHandle()
+  const first = {
+    companyName: 'Acme', jobTitle: 'Engineer', link: 'https://jobs.example/one',
+    resume64: 'data:application/pdf;base64,JVBERi0xLjQgZmlyc3Q=',
+  }
+  const second = {
+    ...first, link: 'https://jobs.example/two',
+    resume64: 'data:application/pdf;base64,JVBERi0xLjQgc2Vjb25k',
+  }
+
+  const hashes = await writePdfAssets(directory, first, {}, date)
+  await writePdfAssets(directory, second, hashes, date)
+
+  assert.equal(directory.files.size, 2)
+  assert.equal(new Set(directory.files.keys()).size, 2)
+})
+
 test('saved documents export stable text files and available original PDFs', async () => {
   const directory = new MemoryDirectoryHandle()
   const originalPdf = new Blob(['%PDF-1.4 original'], { type: 'application/pdf' })
@@ -455,12 +630,17 @@ test('saved documents export stable text files and available original PDFs', asy
 
 test('document export disambiguates path-equivalent saved titles', async () => {
   const directory = new MemoryDirectoryHandle()
-  await writeDocumentAssets(directory, {
+  const documents = {
     resumes: [
       { id: 1, title: 'A/B', text: JSON.stringify({ text: 'First' }) },
       { id: 2, title: 'A:B', text: JSON.stringify({ text: 'Second' }) },
     ],
-  }, {}, date)
+  }
+  const hashes = await writeDocumentAssets(directory, documents, {}, date)
 
   assert.deepEqual([...directory.files.keys()].sort(), ['A-B_1_resume.txt', 'A-B_2_resume.txt'])
+
+  const pruned = await writeDocumentAssets(directory, { resumes: documents.resumes.slice(0, 1) }, hashes, date)
+  assert.deepEqual([...directory.files.keys()], ['A-B_1_resume.txt'])
+  assert.equal(Object.values(pruned).some(({ name }) => name === 'A-B_2_resume.txt'), false)
 })
