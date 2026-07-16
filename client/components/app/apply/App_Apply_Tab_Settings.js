@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { route } from '../../../router.js';
 import { Popover } from '../App_Popover.js'
 import AccountBio from '../account/App_Account_Bio.js'
@@ -29,6 +29,15 @@ function SettingsTab({ userData, setUserData }) {
   const [formFillingInstructions, setFormFillingInstructions] = useState(settings?.formFillingInstructions )
   const [messageRecruiter, setMessageRecruiter] = useState(!!settings?.messageRecruiter)
   const [continuousMode, setContinuousMode] = useState(!!settings?.continuousMode)
+
+  useEffect(() => {
+    setIgnoreCompanyList(settings?.ignoreCompanyList)
+    setIgnoreTitleList(settings?.ignoreTitleList)
+    setMessageToRecruiter(settings?.messageToRecruiter)
+    setFormFillingInstructions(settings?.formFillingInstructions)
+    setMessageRecruiter(!!settings?.messageRecruiter)
+    setContinuousMode(!!settings?.continuousMode)
+  }, [userData.applySettings])
  
   const [formInstructionsPopoverOpen, setFormInstructionsPopoverOpen] = useState(false)
   const [skipCompanyPopoverOpen, setSkipCompanyPopoverOpen] = useState(false)

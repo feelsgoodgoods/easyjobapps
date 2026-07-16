@@ -45,13 +45,13 @@ const UpdateDocumentPopover = ({ onClose, activeTab, postData, setPostData, gene
     
     if (updateType == 'user_manual'){
       // Do nothing send directly to generate pdf  w body.latex 
+      let base64EncodedData = await generatePdf(localDocument);
       let obj = {
         ...postData, 
         [activeTab]: localDocument, // resume: latex
+        ...(base64EncodedData ? { [activeTab + '64']: base64EncodedData } : {}),
       } 
       setPostData(prevPostData => obj);
-   
-      await generatePdf(localDocument); 
   
       showToast();
       onClose();
@@ -107,14 +107,14 @@ const UpdateDocumentPopover = ({ onClose, activeTab, postData, setPostData, gene
     const newDoc = resp[`new${activeTab}`]; 
     console.log('FINISHIFASDF JASODFIJA GOTBACK', {updateType}, newDoc )
     if(updateType === 'ai_retext'){ } // Grab from Callback
+    let base64EncodedData = await generatePdf(newDoc);
     let obj = {
       ...postData,
       ...finalText,      // resumeText: latex
       [activeTab]: newDoc, // resume: latex
+      ...(base64EncodedData ? { [activeTab + '64']: base64EncodedData } : {}),
     } 
     setPostData(prevPostData => obj);
- 
-    await generatePdf(newDoc); 
 
     showToast();
     onClose();

@@ -4,6 +4,7 @@ import { route } from '../../router.js'
 import UpdateDocumentPopover from './apply/App_Apply_Edit.js'
 import QATab from './apply/App_Apply_Tab_QA.js'
 import SettingsTab from './apply/App_Apply_Tab_Settings.js'
+import LocalFolderSync from './apply/App_Apply_Local_Folder_Sync.js'
 import { r_endpoint, p_endpoint } from '../../../shared/endpoints.js'
 import ApplyEditor from './apply/App_Apply_Create.js'
 import { Popover } from './App_Popover.js'
@@ -26,18 +27,25 @@ function Apply({ showToast, postData, setPostData, userData, setUserData }) {
   const processPdfContent = (contentKey, callback) => {
     const savedContent = postData[contentKey]
     // console.log('processPdfContent', contentKey, { savedContent, postData })
-    if (savedContent) {
-      const byteCharacters = atob(savedContent.split(',')[1])
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-
-      const blob = new Blob([byteArray], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-      callback(url)
+    if (!savedContent) {
+      return callback((previous) => {
+        if (previous) URL.revokeObjectURL(previous)
+        return null
+      })
     }
+    const byteCharacters = atob(savedContent.split(',')[1])
+    const byteNumbers = new Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+
+    const blob = new Blob([byteArray], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    callback((previous) => {
+      if (previous) URL.revokeObjectURL(previous)
+      return url
+    })
   }  
 
   useEffect(() => {
@@ -260,6 +268,13 @@ function Apply({ showToast, postData, setPostData, userData, setUserData }) {
       {activeTab === 'qa' && <QATab postData={postData} userData={userData} />}
 
       {activeTab === 'settings' && <SettingsTab userData={userData} setUserData={setUserData} />}
+
+      <LocalFolderSync
+        visible={activeTab === 'settings'}
+        userData={userData} postData={postData}
+        setUserData={setUserData} setPostData={setPostData}
+        showToast={showToast}
+      />
 
       {activePopover && <UpdateDocumentPopover 
         userData={userData} 

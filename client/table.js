@@ -414,4 +414,8 @@ class SQLDatabase {
   }
 }
 
-export { SQLDatabase };
+export {
+  SQLDatabase,
+  getItem as getIndexedDbItem,
+  setItem as setIndexedDbItem,
+};

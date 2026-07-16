@@ -11,6 +11,7 @@
     "staging": "concurrently -n \"START,SERVERS,WATCHBUILD\" -c \"blue,green,red\" \"npm run start\" \"npm run servers\" \"npm run watchbuild\"",
     "prod": "node scripts/deploy-production.js",
     "test:deploy": "node scripts/deploy-production.test.js",
+    "test:folder-sync": "node --test scripts/local-folder-sync.test.js",
     "watchserver": "npx nodemon --config nodemon_server.json",
     "watchbuild": "npx nodemon --config nodemon_build.json",
     "latex": "source ../pdflatex/bin/activate && python ../pdflatex/server.py",
